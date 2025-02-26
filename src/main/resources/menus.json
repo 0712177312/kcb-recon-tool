@@ -1,0 +1,37 @@
+[
+  {
+    "route": "/admin",
+    "name": "Device Management",
+    "type": "link",
+    "icon": "desktop",
+    "badge": null,
+    "permissions": {
+      "only": ["ROLE_SUPER_ADMIN"],
+      "denied": ["ROLE_GUEST"]
+    },
+    "children": [
+      {
+        "route": "/admin/device-inventory",
+        "name": "Device Inventory",
+        "type": "sub",
+        "icon": "list-alt",
+        "badge": null,
+        "permissions": {
+          "only": ["ROLE_SUPER_ADMIN"],
+          "denied": ["ROLE_ADMIN"]
+        }
+      },
+      {
+        "route": "/admin/device-status",
+        "name": "Device Status",
+        "type": "sub",
+        "icon": "cogs",
+        "badge": null,
+        "permissions": {
+          "only": ["ROLE_SUPER_ADMIN"],
+          "denied": ["ROLE_USER"]
+        }
+      }
+    ]
+  }
+]
