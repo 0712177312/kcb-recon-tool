@@ -15,6 +15,9 @@ import java.util.Optional;
 public interface UsersRepository extends JpaRepository<User, Long> {
     Optional<User> findByEmailAddress(String emailAddress);
 
+
+
+    @Query(nativeQuery = true,value = "SELECT * FROM user_accounts  WHERE LOWER(username) = LOWER(:userName)")
     Optional<User> findByUsername(String userName);
 
     /*--Filter Super Admin Accounts By Status With Pagination--*/
@@ -28,7 +31,7 @@ public interface UsersRepository extends JpaRepository<User, Long> {
     Page<User> allSuperAdminAccountsWithPagination(@Param("account_type") Long account_type, Pageable pageable);
 
     /*--All Super Admin Accounts without Status Without Pagination--*/
-    @Query(nativeQuery = true, value = "SELECT ua.* FROM user_accounts ua WHERE ua.country_id IS NULL AND ua.status='Active'")
+    @Query(nativeQuery = true, value = "SELECT ua.* FROM user_accounts ua WHERE ua.country_id IS NULL AND ua.status='Active' AND ua.is_admin ='1'")
     List<User> allSuperAdminAccountsWithoutPagination();
 
     /*--All Country Admin Accounts without Status With Pagination--*/
@@ -75,24 +78,15 @@ public interface UsersRepository extends JpaRepository<User, Long> {
             , @Param("account_type") Long account_type);
 
     /*--Country User Accounts--*/
-    @Query(nativeQuery = true, value = "SELECT * FROM user_accounts " +
-            "WHERE organization_id IS NOT NULL AND " +
-            "branch_id IS NOT NULL AND organization_id=:orgId " +
-            "AND account_type != :account_type")
-    Page<User> allUserAccountsWithPaginationWithOrganizationOnly(@Param("orgId") Long orgId,
-                                                                 @Param("account_type") Long account_type,
-                                                                 Pageable pageable);
-
     @Query(nativeQuery = true, value = "SELECT * FROM user_accounts")
-    List<User> allUserAccountsWithPaginationPerOrganization( @Param("account_type") Long account_type);
+    Page<User> allUserAccountsWithPaginationWithOrganizationOnly(Pageable pageable);
+
+    @Query(nativeQuery = true, value = "SELECT * FROM user_accounts ua where ua.is_admin='0'")
+    List<User> allUserAccountsWithPagination( @Param("account_type") Long account_type);
 
     @Query(nativeQuery = true, value = "SELECT * FROM user_accounts" +
-            " WHERE organization_id IS NOT NULL AND branch_id" +
-            " IS NOT NULL AND organization_id=:orgId AND status=:status " +
-            "AND account_type != :account_type")
+            " WHERE status=:status")
     Page<User> allUserAccountsWithPaginationWithStatusAndOrganization(@Param("status") String status,
-                                                                      @Param("orgId") Long orgId,
-                                                                      @Param("account_type") Long account_type,
                                                                       Pageable pageable);
 
     /*--Review List--*/

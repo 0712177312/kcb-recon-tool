@@ -20,10 +20,8 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 public class ConfigController {
     private final ConfigurationService configurationService;
-    private final EncryptionService encryptionService;
 
     @PostMapping(value = "/rest")
-   // @PreAuthorize("hasAuthority('CONFIGURATION_REQUESTS')")
     public ResponseEntity<ConfigServiceResponse> processConfigRequest(@RequestBody(required = false) String request,@RequestParam(defaultValue = "false") boolean encrypted, @RequestHeader("key") String key) {
        log.info("Received Post request: {}", request);
 

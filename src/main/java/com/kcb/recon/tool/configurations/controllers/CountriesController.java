@@ -54,8 +54,8 @@ public class CountriesController {
         }
     }
 
-    @PostMapping("/ActivateDeactivate")
-    @PreAuthorize("hasAuthority('COUNTRIES_ACTIVATEDEACTIVATE')")
+//    @PostMapping("/ActivateDeactivate")
+//    @PreAuthorize("hasAuthority('COUNTRIES_ACTIVATEDEACTIVATE')")
     public ResponseEntity<?> ActivateDeactivate(@RequestBody(required = false) String request,
                                                 @RequestBody(required = false) ActivateDeactivateRequest payload,
                                                 @RequestParam(defaultValue = "false") boolean encrypted,
@@ -84,8 +84,8 @@ public class CountriesController {
         }
     }
 
-    @GetMapping("/FindById")
-    @PreAuthorize("hasAuthority('COUNTRIES_FINDBYID')")
+//    @GetMapping("/FindById")
+//    @PreAuthorize("hasAuthority('COUNTRIES_FINDBYID')")
     public ResponseEntity<?> FindById(@RequestParam Long id, @RequestHeader("key") String key) {
         EncryptedResponse resBody = new EncryptedResponse();
         try {
@@ -128,8 +128,8 @@ public class CountriesController {
         }
     }
 
-    @PreAuthorize("hasAuthority('COUNTRIES_ADD')")
-    @PostMapping("/Add")
+//    @PreAuthorize("hasAuthority('COUNTRIES_ADD')")
+//    @PostMapping("/Add")
     public ResponseEntity<?> AddNewCountry(
             @RequestBody(required = false) String request,
             @RequestBody(required = false) CountryRequest payload,
@@ -159,8 +159,8 @@ public class CountriesController {
         }
     }
 
-    @PutMapping("/Update")
-    @PreAuthorize("hasAuthority('COUNTRIES_UPDATE')")
+//    @PutMapping("/Update")
+//    @PreAuthorize("hasAuthority('COUNTRIES_UPDATE')")
     public ResponseEntity<?> UpdateCountryDetails(
             @RequestBody(required = false) String request,
             @RequestBody(required = false) CountryRequest payload,

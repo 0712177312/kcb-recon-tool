@@ -87,7 +87,7 @@ public class RolesController {
     }
 
     @PostMapping("/ReviewList")
-    @PreAuthorize("hasAuthority('ROLES_REVIEWLIST')")
+//    @PreAuthorize("hasAuthority('ROLES_REVIEWLIST')")
     public ResponseEntity<?> ReviewList(@RequestBody(required = false) String request,
                                                  @RequestBody(required = false) RolesFilter payload,
                                                  @RequestParam(defaultValue = "false") boolean encrypted,
@@ -116,7 +116,7 @@ public class RolesController {
     }
 
     @PostMapping("/ModificationsReviewList")
-    @PreAuthorize("hasAuthority('ROLES_MODIFICATIONSREVIEWLIST')")
+//    @PreAuthorize("hasAuthority('ROLES_MODIFICATIONSREVIEWLIST')")
     public ResponseEntity<?> ModificationsReviewList(@RequestBody(required = false) String request,
                                         @RequestBody(required = false) RolesFilter payload,
                                         @RequestParam(defaultValue = "false") boolean encrypted,
@@ -189,8 +189,8 @@ public class RolesController {
         }
     }
 
-    @GetMapping("/AllByOrganization")
-    @PreAuthorize("hasAuthority('ROLES_ALLBYORGANIZATION')")
+//    @GetMapping("/AllByOrganization")
+//    @PreAuthorize("hasAuthority('ROLES_ALLBYORGANIZATION')")
     public ResponseEntity<?> AllByOrganization(@RequestHeader("key") String key,@RequestParam("id") Long organization) {
         EncryptedResponse resBody = new EncryptedResponse();
         try {
@@ -272,8 +272,8 @@ public class RolesController {
         }
     }
 
-    @PutMapping("/Update")
-    @PreAuthorize("hasAuthority('ROLES_UPDATE')")
+//    @PutMapping("/Update")
+//    @PreAuthorize("hasAuthority('ROLES_UPDATE')")
     public ResponseEntity<?> UpdateRole(@RequestBody(required = false) String request,
                                         @RequestBody(required = false) RoleRequest payload,
                                         @RequestParam(defaultValue = "false") boolean encrypted,
@@ -302,8 +302,8 @@ public class RolesController {
         }
     }
 
-    @PostMapping("/ApproveRejectEdit")
-    @PreAuthorize("hasAuthority('ROLES_APPROVEREJECTEDIT')")
+//    @PostMapping("/ApproveRejectEdit")
+//    @PreAuthorize("hasAuthority('ROLES_APPROVEREJECTEDIT')")
     public ResponseEntity<?> ApproveRejectEdit(@RequestBody(required = false) String request,
                                                 @RequestBody(required = false) ApproveRejectRequest payload,
                                                 @RequestParam(defaultValue = "false") boolean encrypted,
@@ -332,8 +332,8 @@ public class RolesController {
         }
     }
 
-    @PostMapping("/ApproveReject")
-    @PreAuthorize("hasAuthority('ROLES_APPROVEREJECT')")
+//    @PostMapping("/ApproveReject")
+//    @PreAuthorize("hasAuthority('ROLES_APPROVEREJECT')")
     public ResponseEntity<?> ApproveReject(@RequestBody(required = false) String request,
                                                @RequestBody(required = false) ApproveRejectRequest payload,
                                                @RequestParam(defaultValue = "false") boolean encrypted,

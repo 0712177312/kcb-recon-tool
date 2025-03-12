@@ -31,4 +31,6 @@ public class UserSession {
     @OneToOne
     @JoinColumn(name = "user_id", referencedColumnName = "id")
     private User user;
+//    @Column(name="user_id")
+//    private int userId;
 }

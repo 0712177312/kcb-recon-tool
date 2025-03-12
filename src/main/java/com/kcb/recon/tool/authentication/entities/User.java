@@ -32,8 +32,9 @@ public class User extends Auditing implements UserDetails {
     private String emailAddress;
     @Column(name = "gender")
     private String gender;
-
-    @Column(name="plain_password")
+    @Column(name = "is_admin")
+    private boolean isAdmin;
+    @Column(name = "plain_password")
     private String plainPassword;
     @Column(name = "user_id")
     private String userId;
@@ -61,10 +62,8 @@ public class User extends Auditing implements UserDetails {
     private UserAccountType accountType;
 
     @Column(name = "first_time_login")
-    private boolean firstTimeLogin=true;
+    private boolean firstTimeLogin = true;
 
-    @Column(name = "bio_captured")
-    private String bioCaptured = "Not_Captured";
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

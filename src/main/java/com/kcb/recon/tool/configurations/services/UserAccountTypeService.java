@@ -15,9 +15,6 @@ public interface UserAccountTypeService {
     ResponseMessage create(UserAccountTypeRequest request);
     ResponseMessage update(UserAccountTypeRequest request);
     Optional<UserAccountType> findById(Long id);
-    UserAccountType findRecordById(Long id);
     Optional<UserAccountType> findByName(String name);
     List<UserAccountType> allWithoutPagination();
-    Page<UserAccountType> allWithPagination(RecordsFilter request);
-    ResponseMessage activateDeactivateUserAcccountType(ActivateDeactivateRequest request);
 }

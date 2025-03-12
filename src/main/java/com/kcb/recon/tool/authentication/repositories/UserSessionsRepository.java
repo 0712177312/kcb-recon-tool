@@ -8,6 +8,6 @@ import java.util.Optional;
 
 @Repository
 public interface UserSessionsRepository extends JpaRepository<UserSession,Long> {
-    Optional<UserSession> findByUser(User user);
+    //Optional<UserSession> findByUser(User user);
     Optional<UserSession> findByIssuedTo(String issuedTo);
 }

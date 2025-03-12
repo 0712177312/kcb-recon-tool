@@ -13,13 +13,15 @@ import java.util.Map;
 @Service
 @Slf4j
 public class DashboardServiceImpl implements DashboardService {
-    @Autowired
-    private UsersService usersService;
-    @Autowired
-    private CountriesService countriesService;
-    @Autowired
 
-    private RolesService rolesService;
+    private final UsersService usersService;
+
+    private final  CountriesService countriesService;
+
+    public DashboardServiceImpl(UsersService usersService, CountriesService countriesService) {
+        this.usersService = usersService;
+        this.countriesService = countriesService;
+    }
 
 
     @Override
@@ -27,6 +29,7 @@ public class DashboardServiceImpl implements DashboardService {
         Map<String,Object> data = new HashMap<>();
         data.put("superAdmins",usersService.superAdminAccountsWithoutPagination().size());
         data.put("countryAdmins",usersService.adminAccountsWithoutPagination().size());
+        data.put("countryUsers",usersService.userAccountsWithoutPagination().size());
         data.put("countries",countriesService.allCountriesWithoutPagination().size());
         return data;
     }
@@ -34,7 +37,7 @@ public class DashboardServiceImpl implements DashboardService {
     @Override
     public Map<String, Object> adminDashboardData() {
         Map<String,Object> data = new HashMap<>();
-        data.put("countryUsers",usersService.userAccountsWithoutPaginationPerOrganization().size());
+        data.put("countryUsers",usersService.userAccountsWithoutPagination().size());
         data.put("countries",countriesService.allCountriesWithoutPagination().size());
         return data;
     }

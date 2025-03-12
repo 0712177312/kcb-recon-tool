@@ -66,81 +66,6 @@ public class AuthenticationController {
         }
     }
 
-    @PostMapping("/OTPLogin")
-    public ResponseEntity<EncryptedResponse> signInWithOTP(@RequestBody(required = false) String request,
-                                                           @RequestBody(required = false) OtpLoginRequest payload,
-                                                           @RequestHeader(value = "key", required = false) String key,
-                                                           @RequestParam(required = false, defaultValue = "false") boolean encrypted) {
-        AuthenticationResponse res = new AuthenticationResponse();
-        EncryptedResponse resBody = new EncryptedResponse();
-        try {
-            OtpLoginRequest loginRequest = encrypted
-                    ? encryptionService.decrypt(request, OtpLoginRequest.class, key)
-                    : new Gson().fromJson(request, OtpLoginRequest.class);
-            res = usersService.LoginWithOTP(loginRequest);
-            HttpStatus status = (res != null && res.isStatus()) ? HttpStatus.OK : HttpStatus.EXPECTATION_FAILED;
-            String responseBody = res != null && res.isStatus()
-                    ? encryptionService.encrypt(new Gson().toJson(res), key)
-                    : new Gson().toJson(res);
-            resBody.setBody(responseBody);
-            resBody.setCode(res != null && res.isStatus() ? 200 : 417);
-            return new ResponseEntity<>(resBody, status);
-        } catch (Exception e) {
-            res = new AuthenticationResponse();
-            res.setMessage("Error processing request: " + e.getMessage());
-            res.setStatus(false);
-            resBody.setBody(new Gson().toJson(res));
-            resBody.setCode(417);
-            return new ResponseEntity<>(resBody, HttpStatus.EXPECTATION_FAILED);
-        }
-    }
-
-    @GetMapping("/ResetCode")
-    public ResponseEntity<EncryptedResponse> getPasswordResetCode(@RequestParam("email") String email,
-                                                                  @RequestHeader("key") String key) {
-        ResponseMessage res = usersService.RequestPasswordResetToken(email);
-        EncryptedResponse resBody = new EncryptedResponse();
-        if (res != null) {
-            try {
-                String encryptedResponse = encryptionService.encrypt(new Gson().toJson(res), key);
-                resBody.setBody(encryptedResponse);
-                resBody.setCode(200);
-                return new ResponseEntity<>(resBody, HttpStatus.OK);
-            } catch (Exception e) {
-                resBody.setBody("Error encrypting response: " + e.getMessage());
-                resBody.setCode(417);
-                return new ResponseEntity<>(resBody, HttpStatus.EXPECTATION_FAILED);
-            }
-        } else {
-            resBody.setBody("Failed to generate reset code");
-            resBody.setCode(417);
-            return new ResponseEntity<>(resBody, HttpStatus.EXPECTATION_FAILED);
-        }
-    }
-
-    @GetMapping("/OTPCode")
-    public ResponseEntity<EncryptedResponse> getOTPCode(@RequestParam("username") String username,
-                                                                  @RequestHeader("key") String key) {
-        ResponseMessage res = usersService.RequestLoginOtp(username);
-        EncryptedResponse resBody = new EncryptedResponse();
-        if (res != null) {
-            try {
-                String encryptedResponse = encryptionService.encrypt(new Gson().toJson(res), key);
-                resBody.setBody(encryptedResponse);
-                resBody.setCode(200);
-                return new ResponseEntity<>(resBody, HttpStatus.OK);
-            } catch (Exception e) {
-                resBody.setBody("Error encrypting response: " + e.getMessage());
-                resBody.setCode(417);
-                return new ResponseEntity<>(resBody, HttpStatus.EXPECTATION_FAILED);
-            }
-        } else {
-            resBody.setBody("Failed to generate reset code");
-            resBody.setCode(417);
-            return new ResponseEntity<>(resBody, HttpStatus.EXPECTATION_FAILED);
-        }
-    }
-
     @GetMapping("/RequestPasswordChange")
     public ResponseEntity<EncryptedResponse> requestAdminToResetPassword(@RequestParam("email") String emailAddress,
                                                                          @RequestHeader("key") String key) {
@@ -173,12 +98,6 @@ public class AuthenticationController {
     @GetMapping("/logout")
     public void logout(@RequestParam("username") String username) {
         userSessionsService.logout(username);
-    }
-
-    @GetMapping("/endSession")
-    public ResponseEntity<?> endUserSession(@RequestParam("username") String username) {
-        userSessionsService.logout(username);
-        return new ResponseEntity<>("Successful!", HttpStatus.OK);
     }
 
     @PostMapping("/ResetPassword")

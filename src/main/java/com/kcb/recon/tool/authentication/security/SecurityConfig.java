@@ -33,45 +33,25 @@ public class SecurityConfig implements WebMvcConfigurer {
         http.csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorize ->
                         authorize.requestMatchers(
-                                "/api/v1/Auth/**",
+                                        "/api/v1/Auth/**",
                                         "/api/security/**",
                                         "/api/v1/Menus/**",
                                         "/api/v1/SubMenus/**",
                                         "/api/v1/Bulk/**",
                                         "/api/v1/Download/**",
-                                        "/api/v1/Agents/**",
-                                        "/api/v1/Devices/**",
                                         "/swagger-ui/**",
                                         "/api/v1/Regions/FindByCountries",
                                         "/api-docs/**",
-                                        "/api/v1/partners/**",
-                                        "/api/v1/partnersConfig/**",
-                                        "/api/v1/projects/**",
-                                        "/api/v1/Levels/**",
-                                        "/api/v1/programs/**",
-                                        "/api/v1/Devices/**",
                                         "/api/v1/config/**",
-                                        "/api/v1/PartnerTypes/**",
                                         "/api/v1/LocationMapping/**",
-                                        "/api/v1/beneficiaries/**",
                                         "/api/v1/Integrations/**",
                                         "api/v1/Configs/**")
                                         .permitAll()
-                                        //"/api/v1/partners/**",
-                                        //"/api/v1/partnersConfig/**",
-                                        //"/api/v1/projects/**",
-                                        //"/api/v1/Levels/**",
-                                        //"/api/v1/programs/**",
-                                        //"/api/v1/Devices/**",
-                                        //"/api/v1/PartnerTypes/**")
-
                                 .anyRequest().authenticated()
                 ).sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
-                //.formLogin(AbstractHttpConfigurer::disable)
-                //.httpBasic(AbstractHttpConfigurer::disable);
         return http.build();
     }
 

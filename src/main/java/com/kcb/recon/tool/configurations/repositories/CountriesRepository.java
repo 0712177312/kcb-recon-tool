@@ -17,7 +17,7 @@ public interface CountriesRepository extends JpaRepository<Country,Long> {
     @Query(nativeQuery = true, value = "SELECT * FROM countries WHERE TRIM(name) = TRIM(:name)")
     Optional<Country> findByName(@Param("name") String name);
 
-    @Query(nativeQuery = true,value = "SELECT * FROM countries WHERE validity_status='Approved' AND status='Active'")
+    @Query(nativeQuery = true,value = "SELECT * FROM countries WHERE status='Active'")
     List<Country> allWithoutPagination();
 
     @Query(nativeQuery = true,value = "SELECT * FROM countries WHERE status=:status")

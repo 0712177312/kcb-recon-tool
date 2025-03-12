@@ -13,8 +13,12 @@ import java.util.Optional;
 @Slf4j
 public class UserSessionsServiceImpl implements UserSessionsService {
 
-    @Autowired
-    private UserSessionsRepository userSessionsRepository;
+
+    private final UserSessionsRepository userSessionsRepository;
+
+    public UserSessionsServiceImpl(UserSessionsRepository userSessionsRepository) {
+        this.userSessionsRepository = userSessionsRepository;
+    }
 
     @Override
     public void createUserSession(UserSession session) {
@@ -23,17 +27,32 @@ public class UserSessionsServiceImpl implements UserSessionsService {
         userSessionsRepository.save(session);
     }
 
+//    @Override
+//    public void updateUserSession(UserSession session) {
+//        UserSession userSession1=new UserSession();
+//        userSession1.setUser(session.getUser());
+//        log.info("Inside updateUserSession(UserSession session) At {} ",new Date());
+//        log.info("Updating user session details");
+//        userSessionsRepository.save(userSession1);
+//    }
+
     @Override
     public void updateUserSession(UserSession session) {
-        log.info("Inside updateUserSession(UserSession session) At {} ",new Date());
-        log.info("Updating user session details");
-        userSessionsRepository.save(session);
+
+        Optional<UserSession> existingSessionOpt = userSessionsRepository.findById(session.getId());
+
+        if (existingSessionOpt.isPresent()) {
+            UserSession existingSession = existingSessionOpt.get();
+            existingSession.setUser(session.getUser());
+            userSessionsRepository.save(existingSession);
+        } else {
+            userSessionsRepository.save(session); // Insert as new if not found
+        }
     }
+
 
     @Override
     public Optional<UserSession> findByIssuedTo(String issuedTo) {
-        log.info("Inside findByIssuedTo(String issuedTo) At {} ",new Date());
-        log.info("Fetching user session details by username");
         return userSessionsRepository.findByIssuedTo(issuedTo);
     }
 

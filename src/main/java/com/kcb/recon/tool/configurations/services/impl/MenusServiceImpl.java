@@ -9,6 +9,7 @@ import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -37,9 +38,6 @@ public class MenusServiceImpl implements MenusService {
 
     @Override
     public List<Menu> findMenusAndSubMenusByListOfRoles(List<String> roles) {
-        log.info("Inside findMenusAndSubMenusByListOfRoles(List<String> roles) At {}", new Date());
-        log.info("Fetching all parent menus and filtering by roles...");
-
         List<Menu> accessibleMenus = new ArrayList<>();
 
         if (roles != null && !roles.isEmpty()) {

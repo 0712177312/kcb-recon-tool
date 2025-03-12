@@ -2,7 +2,6 @@ package com.kcb.recon.tool.authentication.services.impl;
 
 import com.kcb.recon.tool.authentication.entities.*;
 import com.kcb.recon.tool.authentication.models.*;
-import com.kcb.recon.tool.authentication.repositories.OtpRepository;
 import com.kcb.recon.tool.authentication.repositories.PasswordChangeRepository;
 import com.kcb.recon.tool.authentication.repositories.PasswordResetRepository;
 import com.kcb.recon.tool.authentication.repositories.UsersRepository;
@@ -71,7 +70,6 @@ public class UsersServiceImpl implements UsersService {
     private final PasswordResetRepository passwordResetRepository;
     private final MenusService menusService;
     private final PasswordChangeRepository passwordChangeRepository;
-    private final OtpRepository otpRepository;
     private final UserAccountTypeService userAccountTypeService;
     private final UserSessionsService userSessionsService;
     private final ConfigurationService configurationService;
@@ -99,7 +97,7 @@ public class UsersServiceImpl implements UsersService {
             res.setStatus(false);
             return res;
         }
-
+        String password = utilitiesService.generatePassword(12, passwordPolicy);
         var user = new User();
         user.setFirstName(request.getFirstName());
         user.setOtherNames(request.getOtherNames());
@@ -108,10 +106,11 @@ public class UsersServiceImpl implements UsersService {
         user.setUsername(request.getUsername());
         user.setEmailAddress(request.getEmailAddress());
         user.setPhoneNumber(request.getPhoneNumber());
-        user.setUserId(utilitiesService.generateUserId());
-        user.setPassword(encoder.encode(""));
-        user.setStatus(RecordStatus.Inactive.name());
-        user.setValidityStatus(ValidityStatus.Pending.name());
+        user.setPlainPassword(password);
+        user.setAdmin(false);
+        user.setPassword(encoder.encode(password));
+        user.setStatus(RecordStatus.Active.name());
+        user.setValidityStatus(ValidityStatus.Approved.name());
 
         log.info("Setting user's roles");
         Set<Role> roles = new HashSet<>();
@@ -264,10 +263,10 @@ public class UsersServiceImpl implements UsersService {
         user.setOtherNames(request.getOtherNames());
         user.setGender(request.getGender());
         user.setCreatedBy(request.getAdminName());
+        user.setAdmin(true);
         user.setUsername(request.getUsername());
         user.setEmailAddress(request.getEmailAddress());
         user.setPhoneNumber(request.getPhoneNumber());
-        user.setUserId(utilitiesService.generateUserId());
         user.setPassword(encoder.encode(password));
         user.setStatus(RecordStatus.Active.name());
         user.setValidityStatus(ValidityStatus.Approved.name());
@@ -319,11 +318,11 @@ public class UsersServiceImpl implements UsersService {
         user.setOtherNames(request.getOtherNames());
         user.setGender(request.getGender());
         user.setCreatedBy(request.getAdminName());
+        user.setAdmin(true);
         user.setUsername(request.getUsername());
         user.setPlainPassword(plainPassword);
         user.setEmailAddress(request.getEmailAddress());
         user.setPhoneNumber(request.getPhoneNumber());
-        user.setUserId(utilitiesService.generateUserId());
         user.setPassword(encoder.encode(password));
         user.setStatus(RecordStatus.Active.name());
         user.setValidityStatus(ValidityStatus.Approved.name());
@@ -392,11 +391,11 @@ public class UsersServiceImpl implements UsersService {
         }
 
         var session = userSessionsService.findByIssuedTo(user.getUsername()).orElse(new UserSession());
-
-        if (isSessionValid(session)) {
-            log.info("Login denied: User {} is already logged in.", request.getUsername());
-            return buildErrorResponse("User is already logged in.");
-        }
+//      uncomment this when pushing to prod
+//        if (isSessionValid(session)) {
+//            log.info("Login denied: User {} is already logged in.", request.getUsername());
+//            return buildErrorResponse("User is already logged in.");
+//        }
 
         return handleSuccessfulLogin(user, request.getUsername(), session);
     }
@@ -429,11 +428,11 @@ public class UsersServiceImpl implements UsersService {
         );
 
         // Save full token in the database
+        log.info("session details :: {},user details  :: {}, fullToken details :{} ", session, username, fullToken);
         updateSession(session, user, fullToken);
 
         return AuthenticationResponse.builder()
                 .status(true)
-                .twoFactor(false)
                 .message("Successful")
                 .token(lightweightToken)
                 .refreshToken(refreshToken)
@@ -443,16 +442,19 @@ public class UsersServiceImpl implements UsersService {
     }
 
     private void updateSession(UserSession session, User user, String token) {
+        log.info("Updating session details 1 before setting user :: {}", session.getUser());
         session.setAccessToken(token);
         session.setUser(user);
         session.setIssuedTo(user.getUsername());
+//        session.setUserId(user.getId());
         session.setIssuedOn(new Date());
         session.setLoggedIn(true);
-
-        if (session.getUser() == null) {
+        log.info("Updating session details 2 after setting user :: {}", session.getUser());
+        if (session.getUser().getUserId() == null) {
+            log.info("User {} has no user session", user.getUsername());
             userSessionsService.createUserSession(session);
         } else {
-//            userSessionsService.updateUserSession(session);
+            userSessionsService.updateUserSession(session);
         }
     }
 
@@ -478,66 +480,6 @@ public class UsersServiceImpl implements UsersService {
                 .build();
     }
 
-    @Override
-    public AuthenticationResponse LoginWithOTP(OtpLoginRequest req) {
-        log.info("Inside LoginWithOTP() - {}", new Date());
-        log.info("OTP Login Request - {}", new Gson().toJson(req));
-
-        var user = userRepository.findByUsername(req.getUsername());
-        if (user.isEmpty()) {
-            log.warn("User {} does not exist! OTP login failed.", req.getUsername());
-            return AuthenticationResponse.builder()
-                    .status(false)
-                    .message("User does not exist!")
-                    .build();
-        }
-
-        var userEntity = user.get();
-        var session = userSessionsService.findByIssuedTo(userEntity.getUsername()).orElse(new UserSession());
-        var otpToken = otpRepository.findByUsernameAndToken(req.getUsername(), req.getOtpCode());
-
-        if (otpToken.isEmpty()) {
-            log.warn("Invalid OTP code provided for user {}", req.getUsername());
-            return AuthenticationResponse.builder()
-                    .status(false)
-                    .message("Invalid OTP Code!")
-                    .build();
-        }
-
-        var otp = otpToken.get();
-        if (LocalDateTime.now().isAfter(otp.getExpiryDate())) {
-            log.warn("Expired OTP code provided for user {}", req.getUsername());
-            return AuthenticationResponse.builder()
-                    .status(false)
-                    .message("OTP Code Has Expired!")
-                    .build();
-        }
-
-        log.info("OTP login successful for user {}", req.getUsername());
-        otp.setStatus(true);
-        otpRepository.save(otp);
-
-        // Generate Tokens
-        var lightweightToken = jwtService.generateLightweightToken(req.getUsername());
-        var refreshToken = jwtService.generateRefreshToken(req.getUsername());
-        var fullToken = jwtService.generateFullToken(req.getUsername(), userEntity.getAuthorities());
-
-        // Save full token in the database
-        updateSession(session, userEntity, fullToken);
-
-        var roles = userEntity.getRoles().stream().map(Role::getName).collect(Collectors.toList());
-        var menus = menusService.findMenusAndSubMenusByListOfRoles(roles);
-
-        return AuthenticationResponse.builder()
-                .status(true)
-                .message("Log in with OTP Successful")
-                .token(lightweightToken)
-                .refreshToken(refreshToken)
-                .menus(menus)
-                .entity(userEntity)
-                .build();
-    }
-
 
     @Override
     public Page<User> superAdminAccountsWithPaginationAndUserTypeFilter(SuperAdminAccountsFilter request) {
@@ -549,22 +491,14 @@ public class UsersServiceImpl implements UsersService {
         if (userType.isPresent()) {
             acctType = userType.get().getId();
         }
+
         log.info("this is the status and userType :{}, {}", status, userType);
 
         int page = Math.max(0, request.getPage() - 1);
         int size = Math.max(1, request.getSize());
-        PageRequest pageRequest = PageRequest.of(page, size);
 
         if (status == null || status.isEmpty()) {
-            log.info("super-admins : {}", userRepository.allSuperAdminAccountsWithPagination(acctType, PageRequest.of(request.getPage(), request.getSize())));
             Page<User> result = userRepository.allSuperAdminAccountsWithPagination(acctType, PageRequest.of(request.getPage(), request.getSize()));
-
-            System.out.println("Query Parameters - Account Type: " + acctType);
-            System.out.println("Pagination - Page: " + page + ", Size: " + size);
-            System.out.println("Result - Total Elements: " + result.getTotalElements());
-            System.out.println("Result - Total Pages: " + result.getTotalPages());
-            System.out.println("Result - Current Page: " + result.getNumber());
-            System.out.println("Result - Content: " + result.getContent());
             return result;
         } else {
             return userRepository.allSuperAdminAccountsWithPagination(status, acctType, PageRequest.of(request.getPage(), request.getSize()));
@@ -573,7 +507,6 @@ public class UsersServiceImpl implements UsersService {
 
     @Override
     public List<User> superAdminAccountsWithoutPagination() {
-        log.info("Inside superAdminAccountsWithoutPagination() At {} ", new Date());
         return userRepository.allSuperAdminAccountsWithoutPagination();
     }
 
@@ -604,19 +537,18 @@ public class UsersServiceImpl implements UsersService {
 
     @Override
     public List<User> adminAccountsWithoutPagination() {
-        log.info("Inside adminAccountsWithoutPagination() At {} ", new Date());
         return userRepository.allAdminAccountsWithoutPagination();
     }
 
     @Override
-    public List<User> userAccountsWithoutPaginationPerOrganization() {
+    public List<User> userAccountsWithoutPagination() {
         log.info("Inside userAccountsWithoutPaginationPerOrganization() At {} ", new Date());
         Long acctType = 0L;
         var userType = userAccountTypeService.findByName("Agent");
         if (userType.isPresent()) {
             acctType = userType.get().getId();
         }
-        return userRepository.allUserAccountsWithPaginationPerOrganization(acctType);
+        return userRepository.allUserAccountsWithPagination(acctType);
     }
 
     @Override
@@ -632,9 +564,9 @@ public class UsersServiceImpl implements UsersService {
             acctType = userType.get().getId();
         }
         if ((organization != null && organization > 0) && (status == null || status.isEmpty())) {
-            return userRepository.allUserAccountsWithPaginationWithOrganizationOnly(organization, acctType, PageRequest.of(request.getPage(), request.getSize()));
+            return userRepository.allUserAccountsWithPaginationWithOrganizationOnly(PageRequest.of(request.getPage(), request.getSize()));
         }
-        return userRepository.allUserAccountsWithPaginationWithStatusAndOrganization(status, organization, acctType, PageRequest.of(request.getPage(), request.getSize()));
+        return userRepository.allUserAccountsWithPaginationWithStatusAndOrganization(status, PageRequest.of(request.getPage(), request.getSize()));
     }
 
     @Override
@@ -983,15 +915,11 @@ public class UsersServiceImpl implements UsersService {
 
     @Override
     public ResponseMessage firstTimeLoginChangePassword(FirstTimePasswordChangeRequest req) {
-        log.info("Inside firstTimeLoginChangePassword(FirstTimePasswordChangeRequest req) At -> {} ", new Date());
-        log.info("user changing password during first log in");
-        log.info("User Change Password Request on first login -> {} ", gson.toJson(req));
         var res = new ResponseMessage();
         var exists = userRepository.findByUsername(req.getUsername());
         if (exists.isPresent()) {
             var user = exists.get();
             if (passwordHistoryService.isRecentPassword(user, req.getPassword())) {
-                log.info("Cannot change password during first login | Password Provided was used recently!");
                 res.setMessage("Password Provided was used recently! Choose a new password!");
                 res.setStatus(false);
             } else {
@@ -1020,63 +948,6 @@ public class UsersServiceImpl implements UsersService {
         return userRepository.findAll();
     }
 
-    @Override
-    public ResponseMessage RequestPasswordResetToken(String email) {
-        log.info("Inside RequestPasswordResetToken(String email) At {} ", new Date());
-        log.info("User, {} ", email + " is requesting password reset token");
-        var res = new ResponseMessage();
-        var user = userRepository.findByEmailAddress(email);
-
-        if (user.isPresent()) {
-            var code = utilitiesService.generateOTPCode(10000, 99999);
-            var pr = new UserPasswordReset();
-            LocalDateTime updatedExpiry;
-            var token = passwordResetRepository.findByUsername(user.get().getUsername());
-
-            if (token.isPresent()) {
-                pr = token.get();
-                if (pr.getExpiryDate().isBefore(LocalDateTime.now())) {
-                    log.info("Existing token expired. Generating a new one.");
-                    updatedExpiry = utilitiesService.addHours(LocalDateTime.now(), Long.parseLong(passwordResetValidityHours));
-                    pr.setExpiryDate(updatedExpiry);
-                    pr.setToken(code);
-                    pr.setStatus(false);
-                } else {
-                    log.info("Existing token is still valid.");
-                    updatedExpiry = pr.getExpiryDate();
-                }
-            } else {
-                log.info("No existing token found. Creating a new one.");
-                updatedExpiry = utilitiesService.addHours(LocalDateTime.now(), Long.parseLong(passwordResetValidityHours));
-                pr.setExpiryDate(updatedExpiry);
-                pr.setStatus(false);
-                pr.setUsername(user.get().getUsername());
-                pr.setToken(code);
-            }
-
-            passwordResetRepository.save(pr);
-
-            String sms = "Your password reset code is : " + code + " and it is valid for " + passwordResetValidityHours + " Hours";
-            String emailBody = "Hi,<br/>Your password reset code is : <h1>" + code + "</h1> and it is valid for " + passwordResetValidityHours + " Hours";
-            res.setMessage("Reset token sent to " + user.get().getEmailAddress());
-            res.setData(null);
-            res.setStatus(true);
-        } else {
-            res.setMessage(email + " does not exist!");
-            res.setData(null);
-            res.setStatus(false);
-            log.warn("Email does not exist, cannot send password reset token!");
-        }
-
-        return res;
-    }
-
-    @Override
-    public Optional<UserPasswordReset> findByUsernameAndToken(String username, String token) {
-        log.info("Inside findByUsernameAndToken(String username, Long token) At -> {} ", new Date());
-        log.info("Find Password reset record by username and token for user {} ", username);
-        return passwordResetRepository.findByUsernameAndToken(username, token);
-    }
 
     @Override
     public ResponseMessage sendPasswordResetRequest(String email) {
@@ -1119,46 +990,6 @@ public class UsersServiceImpl implements UsersService {
         return null;
     }
 
-    @Override
-    public ResponseMessage RequestLoginOtp(String username) {
-        log.info("Inside RequestLoginOtp(String username) Method At {} ", new Date());
-        log.info("User Requesting Login OTP After successful Username & Password Login");
-        var res = new ResponseMessage();
-        var user = userRepository.findByUsername(username);
-        if (user.isPresent()) {
-            var code = utilitiesService.generateOTPCode(10000, 99999);
-            var otp = new OtpCode();
-            LocalDateTime updatedExpiry;
-            var token = otpRepository.findByUsername(username);
-            if (token.isPresent()) {
-                otp = token.get();
-                updatedExpiry = utilitiesService.addMinutes(LocalDateTime.now(), Long.parseLong(login2FAvalidityMinutes));
-                otp.setExpiryDate(updatedExpiry);
-                otp.setToken(code);
-                otp.setStatus(false);
-                otpRepository.save(otp);
-            } else {
-                updatedExpiry = utilitiesService.addMinutes(LocalDateTime.now(), Long.parseLong(login2FAvalidityMinutes));
-                otp.setExpiryDate(updatedExpiry);
-                otp.setStatus(false);
-                otp.setUsername(username);
-                otp.setToken(code);
-                otpRepository.save(otp);
-            }
-
-            String sms = "Your log in code is : " + code + " and it is valid for " + login2FAvalidityMinutes + " minutes!";
-            String emailBody = "Hi,<br/>Your log in code is : <h1>" + code + "</h1> and it is valid for " + login2FAvalidityMinutes + " minutes!";
-            res.setMessage("Login OTP code sent to " + user.get().getEmailAddress());
-            res.setData(null);
-            res.setStatus(true);
-        } else {
-            res.setMessage(username + " does not exist!");
-            res.setData(null);
-            res.setStatus(false);
-            log.warn("Username does not exist, cannot send OTP code!");
-        }
-        return res;
-    }
 
     @Override
     public Page<PasswordChange> passwordChangeRequestsByUsername(PasswordResetFilter request) {
@@ -1198,7 +1029,6 @@ public class UsersServiceImpl implements UsersService {
         }
 
         var user = userOptional.get();
-        log.info("Valid refresh token. Generating new access token for {}", username);
 
         // Generate tokens
         String lightweightToken = jwtService.generateLightweightToken(username);

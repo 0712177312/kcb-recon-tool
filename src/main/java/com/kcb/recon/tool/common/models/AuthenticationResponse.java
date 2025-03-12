@@ -16,6 +16,5 @@ public class AuthenticationResponse {
     private Object menus;
     private boolean status;
     private String message="";
-    private boolean twoFactor;
     private boolean firstLogin;
 }

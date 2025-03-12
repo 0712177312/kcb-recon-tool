@@ -32,7 +32,7 @@ public interface UsersService {
 
     List<User> adminAccountsWithoutPagination();
 
-    List<User> userAccountsWithoutPaginationPerOrganization();
+    List<User> userAccountsWithoutPagination();
 
     Page<User> userAccountsWithPaginationAndUserTypeFilter(UserAccountsFilter request);
 
@@ -64,15 +64,7 @@ public interface UsersService {
 
     List<User> allUserAccounts();
 
-    ResponseMessage RequestPasswordResetToken(String email);
-
-    Optional<UserPasswordReset> findByUsernameAndToken(String username, String token);
-
     ResponseMessage sendPasswordResetRequest(String username);
-
-    ResponseMessage RequestLoginOtp(String username);
-
-    AuthenticationResponse LoginWithOTP(OtpLoginRequest req);
 
     Page<PasswordChange> passwordChangeRequestsByUsername(PasswordResetFilter request);
 

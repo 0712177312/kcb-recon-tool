@@ -18,6 +18,7 @@ public class UserAccountRequest {
     private String username;
     private String phoneNumber;
     private String gender;
+    private boolean isAdmin;
     private String userId;
     private String adminName;
     private Long organization;

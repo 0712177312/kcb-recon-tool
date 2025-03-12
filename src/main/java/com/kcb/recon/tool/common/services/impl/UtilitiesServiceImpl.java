@@ -47,15 +47,6 @@ public class UtilitiesServiceImpl implements UtilitiesService {
     private final RequestMappingHandlerMapping requestMappingHandlerMapping;
     private static final SecureRandom secureRandom = new SecureRandom();
 
-    @Override
-    public LocalDateTime addHours(LocalDateTime dateTime, long hoursToAdd) {
-        return dateTime.plusHours(hoursToAdd);
-    }
-
-    @Override
-    public LocalDateTime addMinutes(LocalDateTime dateTime, long minutesToAdd) {
-        return dateTime.plusMinutes(minutesToAdd);
-    }
 
     @Override
     public List<PermissionRequest> getAvailablePermissions() {
@@ -76,12 +67,6 @@ public class UtilitiesServiceImpl implements UtilitiesService {
     }
 
     @Override
-    public String generateOTPCode(int min, int max) {
-        int randomNumber = random.nextInt(max - min + 1) + min;
-        return String.format("%04d", randomNumber);
-    }
-
-    @Override
     public String generatePassword(int length, String regexPolicy) {
         StringBuilder password = new StringBuilder();
         Pattern pattern = Pattern.compile(regexPolicy);
@@ -98,107 +83,9 @@ public class UtilitiesServiceImpl implements UtilitiesService {
         }
     }
 
-    @Override
-    public String generateUserId() {
-        int randomNumber = random.nextInt(99999 - 10000) + 10000;
-        return "EQ"+randomNumber;
-    }
-
-    @Override
-    public String generateUUID() {
-        return UUID.randomUUID().toString();
-    }
-
-    @Override
-    public String generateRandomChars(int length) {
-        String CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        StringBuilder randomString = new StringBuilder(length);
-        Random random = new Random();
-
-        for (int i = 0; i < length; i++) {
-            int index = random.nextInt(CHARACTERS.length());
-            randomString.append(CHARACTERS.charAt(index));
-        }
-        return randomString.toString();
-    }
-
     public char generateRandomCharacter() {
         String charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=[]{}|;:,.<>?";
         return charset.charAt(random.nextInt(charset.length()));
     }
 
-    @Override
-    public String encryptAndSaveToFile(Object plainText,String password,String folder) {
-        try {
-            BasicTextEncryptor textEncryptor = new BasicTextEncryptor();
-            textEncryptor.setPassword(password);
-            String encryptedText = textEncryptor.encrypt(String.valueOf(plainText));
-            String fileName = UUID.randomUUID() + ".txt";
-            File file = new File(folder+fileName);
-            writeToFile(file, encryptedText);
-            return folder+fileName;
-        } catch (Exception e) {
-            log.error("Error during file encryption | {}", e.getMessage());
-        }
-        return null;
-    }
-
-    @Override
-    public String decryptFromFile(File file,String password) {
-        try {
-            Object encryptedText = readFromFile(file);
-            BasicTextEncryptor textEncryptor = new BasicTextEncryptor();
-            textEncryptor.setPassword(password);
-            return textEncryptor.decrypt(encryptedText.toString());
-        } catch (Exception e) {
-            log.error("Error during file decryption | {}", e.getMessage());
-        }
-        return null;
-    }
-
-    @Override
-    public void writeToFile(File file, String content) {
-        try (FileWriter writer = new FileWriter(file)) {
-            writer.write(content);
-        } catch (IOException e) {
-            log.error("Error writing to file | {} ", e.getMessage());
-        }
-    }
-
-    @Override
-    public Object readFromFile(File file) {
-        StringBuilder content = new StringBuilder();
-        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                content.append(line);
-            }
-        } catch (IOException e) {
-            log.error("Error reading to file | {} ", e.getMessage());
-        }
-        return content.toString();
-    }
-
-    @Override
-    public String generateSerialNo(int length) {
-        String digits = "0123456789";
-        StringBuilder serialNo = new StringBuilder(length);
-        for (int i = 0; i < length; i++) {
-            int index = random.nextInt(digits.length());
-            serialNo.append(digits.charAt(index));
-        }
-
-        return serialNo.toString();
-    }
-
-    @Override
-    public Connection getDatabaseConnection(){
-        try {
-            Class.forName(dbClassname);
-            return DriverManager.getConnection(dbUrl, dbUsername, dbPassword);
-        }catch (Exception e){
-            log.error("Failed to create ORACLE DB Connection | {}",e.getMessage());
-            return null;
-        }
-    }
 }

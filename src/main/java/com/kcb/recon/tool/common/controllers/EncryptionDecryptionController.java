@@ -11,8 +11,12 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/security")
 public class EncryptionDecryptionController {
 
-    @Autowired
-    private EncryptionService encryptionService;
+
+    private final EncryptionService encryptionService;
+
+    public EncryptionDecryptionController(EncryptionService encryptionService) {
+        this.encryptionService = encryptionService;
+    }
 
     @GetMapping("/double/key")
     //Call this to manually get aes key which will be encrypted using rsa

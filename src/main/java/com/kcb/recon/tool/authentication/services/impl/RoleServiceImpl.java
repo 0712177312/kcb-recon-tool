@@ -50,8 +50,8 @@ public class RoleServiceImpl implements RolesService {
                 role.setCheckedOn(new Date());
             } else {
                 role.setOrganization(request.getOrganization());
-                role.setStatus(RecordStatus.Inactive.name());
-                role.setValidityStatus(ValidityStatus.Pending.name());
+                role.setStatus(RecordStatus.Active.name());
+                role.setValidityStatus(ValidityStatus.Approved.name());
             }
             Set<Permission> privileges = new HashSet<>();
             if (request.getPermissions().stream().findAny().isPresent()) {

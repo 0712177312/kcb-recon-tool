@@ -15,8 +15,12 @@ import java.util.Date;
 @CrossOrigin
 @Slf4j
 public class DashboardsController {
-    @Autowired
-    private DashboardService dashboardService;
+
+    private final  DashboardService dashboardService;
+
+    public DashboardsController(DashboardService dashboardService) {
+        this.dashboardService = dashboardService;
+    }
 
     @GetMapping("/SuperAdmin")
     @PreAuthorize("hasAuthority('DASHBOARD_SUPERADMIN')")

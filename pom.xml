@@ -11,8 +11,8 @@
     <groupId>com.kcb.recon.tool</groupId>
     <artifactId>kcb-recon-tool</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <packaging>war</packaging>
-    <name>kcb-recon-tool</name>
+    <packaging>jar</packaging>
+    <name>kcb-recon-tool-backend</name>
     <description>Kcb Recon Tool Project</description>
     <url/>
     <licenses>
@@ -153,7 +153,7 @@
 
     </dependencies>
     <build>
-        <finalName>esp</finalName>
+        <finalName>kcb-recon-tool-backend</finalName>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>

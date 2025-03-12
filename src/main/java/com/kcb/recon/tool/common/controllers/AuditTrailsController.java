@@ -11,11 +11,15 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/AuditTrails")
 @CrossOrigin
 public class AuditTrailsController {
-    @Autowired
-    private AuditTrailsService auditTrailsService;
 
-    @GetMapping("/View")
-    @PreAuthorize("hasAuthority('AUDITTRAILS_VIEW')")
+    private final AuditTrailsService auditTrailsService;
+
+    public AuditTrailsController(AuditTrailsService auditTrailsService) {
+        this.auditTrailsService = auditTrailsService;
+    }
+
+    //    @GetMapping("/View")
+//    @PreAuthorize("hasAuthority('AUDITTRAILS_VIEW')")
     public ResponseEntity<?> ViewAllLogs(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size){
         return new ResponseEntity<>(auditTrailsService.allAuditTrailsWithPagination(page, size), HttpStatus.OK);
     }

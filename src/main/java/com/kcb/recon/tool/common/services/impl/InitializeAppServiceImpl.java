@@ -33,7 +33,7 @@ public class InitializeAppServiceImpl implements InitializeAppService {
     private String defaultEmail;
 
     @Value("${org.default.admin.role}")
-    private String defaultAdminRole;
+    private String defaultUserRole;
 
     @Value("${org.default.superadmin.role}")
     private String defaultSuperadminRole;
@@ -57,7 +57,6 @@ public class InitializeAppServiceImpl implements InitializeAppService {
     private final RolesService rolesService;
     private final PermissionsService permissionsService;
     private final UtilitiesService utilitiesService;
-    private final MenusService menusService;
     private final CountriesService countriesService;
     private final UserAccountTypeService userAccountTypeService;
 
@@ -95,11 +94,11 @@ public class InitializeAppServiceImpl implements InitializeAppService {
 
             var adminRole = new RoleRequest();
             pvs = new ArrayList<>();
-            adminRole.setName(defaultAdminRole);
+            adminRole.setName(defaultUserRole);
             adminRole.setUserName("System");
             adminRole.setPermissions(pvs);
             rolesService.createRole(adminRole);
-            log.info("Done Creating default country admin role -> {} ", defaultAdminRole);
+            log.info("Done Creating default country admin role -> {} ", defaultUserRole);
         } else {
             log.info("Updating super admin's permissions");
             var r = rolesService.findByRoleName(defaultSuperadminRole);
@@ -130,7 +129,6 @@ public class InitializeAppServiceImpl implements InitializeAppService {
                 var accountType = new UserAccountTypeRequest();
                 accountType.setUsername("System");
                 accountType.setName(a);
-                accountType.setEnableOtp(false);
                 userAccountTypeService.create(accountType);
                 log.info("User Account Type {} Created successfully!", a);
             }

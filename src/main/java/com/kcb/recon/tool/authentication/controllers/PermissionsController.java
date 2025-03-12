@@ -108,8 +108,8 @@ public class PermissionsController {
         }
     }
 
-    @PutMapping("/Update")
-    @PreAuthorize("hasAuthority('PERMISSIONS_UPDATE')")
+//    @PutMapping("/Update")
+//    @PreAuthorize("hasAuthority('PERMISSIONS_UPDATE')")
     public ResponseEntity<?> UpdatePermissionDetails(@RequestBody(required = false) String request,
                                                      @RequestBody(required = false) PermissionRequest payload,
                                                      @RequestParam(defaultValue = "false") boolean encrypted,

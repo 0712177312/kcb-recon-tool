@@ -109,8 +109,6 @@ public class CountriesServiceImpl implements CountriesService {
 
     @Override
     public List<Country> allCountriesWithoutPagination() {
-        log.info("Inside allCountriesWithoutPagination() At {} ",new Date());
-        log.info("Fetch all countries without pagination");
         return countriesRepository.allWithoutPagination();
     }
 

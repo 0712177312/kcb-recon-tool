@@ -1,10 +1,8 @@
 package com.kcb.recon.tool.configurations.services.impl;
 
-import com.kcb.recon.tool.authentication.models.ActivateDeactivateRequest;
 import com.kcb.recon.tool.common.enums.ChangeStatus;
 import com.kcb.recon.tool.common.enums.RecordStatus;
 import com.kcb.recon.tool.common.enums.ValidityStatus;
-import com.kcb.recon.tool.common.models.RecordsFilter;
 import com.kcb.recon.tool.common.models.ResponseMessage;
 import com.kcb.recon.tool.configurations.entities.UserAccountType;
 import com.kcb.recon.tool.configurations.models.UserAccountTypeRequest;
@@ -13,8 +11,6 @@ import com.kcb.recon.tool.configurations.services.UserAccountTypeService;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import java.util.Date;
 import java.util.List;
@@ -91,12 +87,6 @@ public class UserAccountTypesServiceImpl implements UserAccountTypeService {
         return accountTypesRepository.findById(id);
     }
 
-    @Override
-    public UserAccountType findRecordById(Long id) {
-        log.info("Inside findRecordById(Long id) {} ", new Date());
-        log.info("Fetching User account type details by id");
-        return accountTypesRepository.findById(id).orElse(null);
-    }
 
     @Override
     public Optional<UserAccountType> findByName(String name) {
@@ -112,49 +102,4 @@ public class UserAccountTypesServiceImpl implements UserAccountTypeService {
         return accountTypesRepository.allWithoutPagination();
     }
 
-    @Override
-    public Page<UserAccountType> allWithPagination(RecordsFilter request) {
-        log.info("Inside allWithPagination(RecordsFilter request) At {} ", new Date());
-        log.info("Fetch all partner types with pagination with filters | Request {} ", new Gson().toJson(request));
-
-        String status = request.getStatus();
-        if(status!=null && !status.isEmpty()){
-            return accountTypesRepository.filterWithPaginationStatusProvided(status,PageRequest.of(request.getPage(), request.getSize()));
-        }
-        return accountTypesRepository.allWithPagination(PageRequest.of(request.getPage(), request.getSize()));
-    }
-
-    @Override
-    public ResponseMessage activateDeactivateUserAcccountType(ActivateDeactivateRequest request) {
-        log.info("Inside activateDeactivateUserAcccountType(ActivateDeactivateRequest request) At {}", new Date());
-        log.info("Request | {} ",new Gson().toJson(request));
-
-        var res = new ResponseMessage();
-        var exists = accountTypesRepository.findById(request.getId());
-        if (exists.isPresent()) {
-            var accountType = exists.get();
-            accountType.setModifiedBy(request.getUserName());
-            accountType.setModifiedOn(new Date());
-            if(request.getAction().equalsIgnoreCase("Activate")) {
-                accountType.setValidityStatus(ValidityStatus.Approved.name());
-                accountType.setStatus(RecordStatus.Active.name());
-                res.setStatus(true);
-                log.info("User Account Type Activated Successfully!");
-                res.setMessage("Activated Successfully!");
-            }
-            else{
-                accountType.setValidityStatus(ValidityStatus.Disapproved.name());
-                accountType.setStatus(RecordStatus.Inactive.name());
-                res.setStatus(true);
-                log.info("User Account Type Deactivated Successfully!");
-                res.setMessage("Deactivated Successfully!");
-            }
-            accountTypesRepository.save(accountType);
-        } else {
-            log.warn("Failed to Activate/Deactivate User Account type | Account Type does not exist!");
-            res.setMessage("User Account Type Does not exist!");
-            res.setStatus(false);
-        }
-        return res;
-    }
 }
