@@ -1,6 +1,5 @@
 package com.kcb.recon.tool.common.services.impl;
-import com.kcb.recon.tool.authentication.config.OkHttpClientConfig;
-import com.kcb.recon.tool.authentication.models.ReconConfigRequest;
+import com.kcb.recon.tool.authentication.utils.OkHttpClientConfig;
 import com.kcb.recon.tool.common.models.*;
 import com.kcb.recon.tool.common.services.ConfigurationService;
 import com.google.gson.Gson;

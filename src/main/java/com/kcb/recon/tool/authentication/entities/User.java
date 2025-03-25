@@ -2,7 +2,6 @@ package com.kcb.recon.tool.authentication.entities;
 
 import com.kcb.recon.tool.common.entities.Auditing;
 import com.kcb.recon.tool.configurations.entities.Country;
-import com.kcb.recon.tool.configurations.entities.UserAccountType;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
@@ -42,6 +41,8 @@ public class User extends Auditing implements UserDetails {
     private String phoneNumber;
     @Column(name = "username")
     private String username;
+    @Column(name = "logged_in")
+    private boolean loggedIn;
     @Column(name = "password")
     @JsonIgnore
     private String password;
@@ -56,10 +57,6 @@ public class User extends Auditing implements UserDetails {
     @ManyToOne
     @JoinColumn(name = "country_id")
     private Country country;
-
-    @ManyToOne
-    @JoinColumn(name = "account_type")
-    private UserAccountType accountType;
 
     @Column(name = "first_time_login")
     private boolean firstTimeLogin = true;

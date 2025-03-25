@@ -6,5 +6,6 @@ import org.springframework.stereotype.Component;
 public interface EncryptionService {
     String encryptAESKeyWithRSA();
     <T> T decrypt(String data,Class<T> type,String key);
+    String decrypt(String data,String key);
     String encrypt(String data,String key);
 }

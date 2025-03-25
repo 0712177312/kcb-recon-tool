@@ -15,10 +15,10 @@ public interface RolesRepository extends JpaRepository<Role,Long> {
     @Query(nativeQuery = true, value = "SELECT * FROM roles WHERE TRIM(name) = TRIM(:name)")
     Optional<Role> findByName(@Param("name") String name);
     Optional<Role> findByNameAndOrganization(String name,Long organization);
-    @Query(nativeQuery = true, value = "SELECT * FROM roles WHERE validity_status = :status AND organization IS NOT NULL AND organization=:organization")
-    Page<Role> filterWithPaginationStatusProvidedForReviewList(@Param("organization") Long organization,@Param("status") String status, Pageable pageable);
-    @Query(nativeQuery = true,value = "SELECT * FROM roles WHERE validity_status='Pending' AND status='Inactive' AND organization IS NOT NULL AND organization=:organization")
-    Page<Role> filterWithPaginationForReviewListPendingOnly(@Param("organization") Long organization, Pageable pageable);
+    @Query(nativeQuery = true, value = "SELECT * FROM roles WHERE validity_status = :status")
+    Page<Role> filterWithPaginationStatusProvidedForReviewList(@Param("status") String status, Pageable pageable);
+    @Query(nativeQuery = true,value = "SELECT * FROM roles WHERE validity_status='Pending' AND status='Inactive'")
+    Page<Role> filterWithPaginationForReviewListPendingOnly( Pageable pageable);
     @Query(nativeQuery = true,value = "SELECT * FROM roles WHERE organization=:organization")
     Page<Role> allWithPagination(@Param("organization") Long organization,Pageable pageable);
     @Query(nativeQuery = true, value = "SELECT * FROM roles WHERE status = :status AND organization=:organization")

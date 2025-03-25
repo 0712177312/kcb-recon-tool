@@ -1,5 +1,6 @@
 package com.kcb.recon.tool.authentication.security;
 
+import com.kcb.recon.tool.authentication.utils.UsernameOnlyAuthenticationProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -8,9 +9,7 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -23,39 +22,21 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @RequiredArgsConstructor
 public class SecurityConfig implements WebMvcConfigurer {
 
+    private  final UsernameOnlyAuthenticationProvider usernameOnlyAuthenticationProvider;
+
     @Value("${cors.origin}")
     private String origin;
-
-    private final JwtAuthenticationFilter jwtRequestFilter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorize ->
-                        authorize.requestMatchers(
-                                        "/api/v1/Auth/**",
-                                        "/api/security/**",
-                                        "/api/v1/Menus/**",
-                                        "/api/v1/SubMenus/**",
-                                        "/api/v1/Bulk/**",
-                                        "/api/v1/Download/**",
-                                        "/swagger-ui/**",
-                                        "/api/v1/Regions/FindByCountries",
-                                        "/api-docs/**",
-                                        "/api/v1/config/**",
-                                        "/api/v1/LocationMapping/**",
-                                        "/api/v1/Integrations/**",
-                                        "api/v1/Configs/**")
-                                        .permitAll()
-                                .anyRequest().authenticated()
-                ).sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                )
-                .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
+                        authorize.anyRequest().permitAll())
+                .formLogin(AbstractHttpConfigurer::disable)
+//                .authenticationProvider(usernameOnlyAuthenticationProvider)
+                .httpBasic(AbstractHttpConfigurer::disable);
         return http.build();
     }
-
-
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")

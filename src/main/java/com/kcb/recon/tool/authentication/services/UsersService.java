@@ -16,8 +16,6 @@ import java.util.Optional;
 public interface UsersService {
     ResponseMessage registerUser(UserAccountRequest request);
 
-    ResponseMessage approveRejectUserAccount(ApproveRejectRequest request);
-
     ResponseMessage registerAdmin(UserAccountRequest request);
 
     ResponseMessage registerSuperadmin(UserAccountRequest request);
@@ -36,25 +34,16 @@ public interface UsersService {
 
     Page<User> userAccountsWithPaginationAndUserTypeFilter(UserAccountsFilter request);
 
-    Page<User> userAccountsWithPaginationAndUserTypeFilterForReviewList(UserAccountsFilter request);
-
-    Page<User> userAccountsWithPaginationAndUserTypeFilterForModificationsReviewList(UserAccountsFilter request);
-
     User findByUserId(Long id);
 
     ResponseMessage UserChangePassword(ChangePasswordRequest req);
 
     ResponseMessage AdminChangeUserPassword(AdminChangeUserPasswordRequest req);
 
-    ResponseMessage ChangeUserBranch(ChangeUserBranchRequest req);
-
-    ResponseMessage ChangeUserAccountType(AdminChangeUserAccountType req);
-
     ResponseMessage SuperAdminUpdateProfile(UpdateProfileRequest req);
 
     ResponseMessage AdminUpdateUserProfile(UpdateProfileRequest req);
 
-    ResponseMessage approveRejectUserAccountModification(ApproveRejectRequest request);
 
     ResponseMessage activateDeactivateUserAccount(ActivateDeactivateRequest request);
 
@@ -66,9 +55,7 @@ public interface UsersService {
 
     ResponseMessage sendPasswordResetRequest(String username);
 
-    Page<PasswordChange> passwordChangeRequestsByUsername(PasswordResetFilter request);
+//    RefreshTokenResponse refreshAccessToken(String refreshToken);
 
-    Page<PasswordChange> passwordChangeRequestsByRecipient(PasswordResetFilter request);
-
-    RefreshTokenResponse refreshAccessToken(String refreshToken);
+    void logout(String username);
 }

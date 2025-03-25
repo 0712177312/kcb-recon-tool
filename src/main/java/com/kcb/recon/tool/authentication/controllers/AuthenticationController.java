@@ -1,7 +1,6 @@
 package com.kcb.recon.tool.authentication.controllers;
 
 import com.kcb.recon.tool.authentication.models.*;
-import com.kcb.recon.tool.authentication.services.UserSessionsService;
 import com.kcb.recon.tool.authentication.services.UsersService;
 import com.kcb.recon.tool.common.models.AuthenticationResponse;
 import com.kcb.recon.tool.common.models.EncryptedResponse;
@@ -9,14 +8,12 @@ import com.kcb.recon.tool.common.models.ResponseMessage;
 import com.kcb.recon.tool.common.services.EncryptionService;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/Auth")
-@CrossOrigin
 @Slf4j
 public class AuthenticationController {
 
@@ -24,14 +21,14 @@ public class AuthenticationController {
     private final UsersService usersService;
 
 
-    private final UserSessionsService userSessionsService;
+//    private final UserSessionsService userSessionsService;
 
 
     private final EncryptionService encryptionService;
 
-    public AuthenticationController(UsersService usersService, UserSessionsService userSessionsService, EncryptionService encryptionService) {
+    public AuthenticationController(UsersService usersService, EncryptionService encryptionService) {
         this.usersService = usersService;
-        this.userSessionsService = userSessionsService;
+//        this.userSessionsService = userSessionsService;
         this.encryptionService = encryptionService;
     }
 
@@ -89,15 +86,15 @@ public class AuthenticationController {
         }
     }
 
-    @GetMapping("/RefreshAccessToken")
-    public ResponseEntity<?> RefreshAccessToken(@RequestHeader("token") String token) {
-        RefreshTokenResponse res = usersService.refreshAccessToken(token);
-        return new ResponseEntity<>(res, HttpStatus.OK);
-    }
+//    @GetMapping("/RefreshAccessToken")
+//    public ResponseEntity<?> RefreshAccessToken(@RequestHeader("token") String token) {
+//        RefreshTokenResponse res = usersService.refreshAccessToken(token);
+//        return new ResponseEntity<>(res, HttpStatus.OK);
+//    }
 
     @GetMapping("/logout")
     public void logout(@RequestParam("username") String username) {
-        userSessionsService.logout(username);
+        usersService.logout(username);
     }
 
     @PostMapping("/ResetPassword")

@@ -23,7 +23,6 @@ public class DashboardsController {
     }
 
     @GetMapping("/SuperAdmin")
-    @PreAuthorize("hasAuthority('DASHBOARD_SUPERADMIN')")
     public ResponseEntity<?> SuperAdminDashboard()
     {
         log.info("Inside SuperAdminDashboard() At {} ", new Date());
@@ -31,7 +30,6 @@ public class DashboardsController {
     }
 
     @GetMapping("/Admin")
-    @PreAuthorize("hasAuthority('DASHBOARD_ADMIN')")
     public ResponseEntity<?> CountryAdminDashboard()
     {
         return new ResponseEntity<>(dashboardService.adminDashboardData(), HttpStatus.OK);

@@ -12,8 +12,6 @@ import com.kcb.recon.tool.authentication.entities.Permission;
 import com.kcb.recon.tool.configurations.models.CountryRequest;
 import com.kcb.recon.tool.configurations.models.UserAccountTypeRequest;
 import com.kcb.recon.tool.configurations.services.CountriesService;
-import com.kcb.recon.tool.configurations.services.MenusService;
-import com.kcb.recon.tool.configurations.services.UserAccountTypeService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -58,7 +56,6 @@ public class InitializeAppServiceImpl implements InitializeAppService {
     private final PermissionsService permissionsService;
     private final UtilitiesService utilitiesService;
     private final CountriesService countriesService;
-    private final UserAccountTypeService userAccountTypeService;
 
     @Override
     public void InitializeApplication() {
@@ -121,17 +118,6 @@ public class InitializeAppServiceImpl implements InitializeAppService {
             countryRequest.setCode(defaultCountryCode);
             countriesService.createCountry(countryRequest);
             log.info("Default Country {} Created successfully!", defaultCountryName);
-        }
-
-        if (userAccountTypeService.allWithoutPagination().isEmpty()) {
-            log.info("Creating default user account types");
-            for (var a : userTypes) {
-                var accountType = new UserAccountTypeRequest();
-                accountType.setUsername("System");
-                accountType.setName(a);
-                userAccountTypeService.create(accountType);
-                log.info("User Account Type {} Created successfully!", a);
-            }
         }
 
         if (usersService.allUserAccounts().isEmpty()) {

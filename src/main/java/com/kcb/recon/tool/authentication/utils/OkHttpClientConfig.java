@@ -1,4 +1,4 @@
-package com.kcb.recon.tool.authentication.config;
+package com.kcb.recon.tool.authentication.utils;
 
 import okhttp3.OkHttpClient;
 import org.springframework.beans.factory.annotation.Value;

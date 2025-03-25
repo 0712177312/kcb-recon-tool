@@ -158,7 +158,6 @@ public class RoleServiceImpl implements RolesService {
             privileges.removeIf(privilege -> !incomingPrivilegeIds.contains(privilege.getId()));
             role.setPermissions(privileges);
             rolesRepository.save(role);
-            log.info("Role {} updated successfully with no maker-checker!", request.getName());
         } else {
             log.warn("Failed to update role {} | Role does not exist!", request.getName());
         }
@@ -274,35 +273,26 @@ public class RoleServiceImpl implements RolesService {
 
     @Override
     public List<Role> allRolesAdmin(Long organizationId) {
-        log.info("Inside allRolesAdmin(Long organizationId) At {}", new Date());
-        log.info("Fetch All Roles without pagination");
         return rolesRepository.allWithoutPaginationForAdmin(organizationId);
     }
 
     @Override
     public List<Role> allRolesPerOrganization() {
-        log.info("Inside allRolesPerOrganization(Long organizationId) At {}", new Date());
-        log.info("Fetch All Roles without pagination per organization (both active and inactive)");
         return rolesRepository.allWithoutPaginationForOrganizationNoFilter();
     }
 
     @Override
     public List<Role> allRolesSuperAdmin() {
-        log.info("Inside allRolesSuperAdmin() At {}", new Date());
-        log.info("Fetch All Roles without pagination by super admin");
         return rolesRepository.allWithoutPaginationForSuperAdmin();
     }
 
     @Override
     public Optional<Role> findByRoleName(String name) {
-        log.info("Inside findByRoleName(String name) At {}", new Date());
         return rolesRepository.findByName(name);
     }
 
     @Override
     public Page<Role> paginatedAdminRolesListWithFilters(RolesFilter request) {
-        log.info("Inside paginatedAdminRolesListWithFilters(RolesFilter request) At -> {} ", new Date());
-        log.info("Fetch admin roles with pagination and filters {} ", new Gson().toJson(request));
         String status = request.getStatus();
         if (status != null && !status.isEmpty()) {
             return rolesRepository.filterAdminRolesWithPaginationStatusProvided(status, PageRequest.of(request.getPage(), request.getSize()));
@@ -312,8 +302,6 @@ public class RoleServiceImpl implements RolesService {
 
     @Override
     public Page<Role> paginatedRolesListWithFilters(RolesFilter request) {
-        log.info("Inside paginatedRolesListWithFilters(RolesFilter filter) At -> {} ", new Date());
-        log.info("Fetch roles with pagination and filters {} ", new Gson().toJson(request));
         String status = request.getStatus();
         Long organization = request.getOrganization();
 
@@ -325,21 +313,16 @@ public class RoleServiceImpl implements RolesService {
 
     @Override
     public Page<Role> paginatedRolesListWithFiltersForReviewList(RolesFilter request) {
-        log.info("Inside paginatedRolesListWithFiltersForReviewList(RolesFilter filter) At -> {} ", new Date());
-        log.info("Fetching roles with pagination and filters for review list (maker-checker) {} ", new Gson().toJson(request));
         String status = request.getStatus();
-        Long organization = request.getOrganization();
 
         if (status != null && !status.isEmpty()) {
-            return rolesRepository.filterWithPaginationStatusProvidedForReviewList(organization,status, PageRequest.of(request.getPage(), request.getSize()));
+            return rolesRepository.filterWithPaginationStatusProvidedForReviewList(status, PageRequest.of(request.getPage(), request.getSize()));
         }
-        return rolesRepository.filterWithPaginationForReviewListPendingOnly(organization,PageRequest.of(request.getPage(), request.getSize()));
+        return rolesRepository.filterWithPaginationForReviewListPendingOnly(PageRequest.of(request.getPage(), request.getSize()));
     }
 
     @Override
     public Page<Role> paginatedRolesListWithFiltersForModificationsReviewList(RolesFilter request) {
-        log.info("Inside paginatedRolesListWithFiltersForModificationsReviewList(RolesFilter filter) At -> {} ", new Date());
-        log.info("Fetching roles with pagination and filters for modifications review list (maker-checker) {} ", new Gson().toJson(request));
         String status = request.getStatus();
         Long organization = request.getOrganization();
 

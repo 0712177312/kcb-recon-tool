@@ -21,18 +21,19 @@ import java.util.List;
 @Service
 public class PermissionsServiceImpl implements PermissionsService {
 
-    @Autowired
-    private PermissionsRepository permissionsRepository;
+
+    private final PermissionsRepository permissionsRepository;
+
+    public PermissionsServiceImpl(PermissionsRepository permissionsRepository) {
+        this.permissionsRepository = permissionsRepository;
+    }
 
     @Override
     public ResponseMessage createPermission(PermissionRequest request) {
-        log.info("Inside createPermission(PermissionRequest request) At {} ", new Date());
-        log.info("Create Permission Request {} ",new Gson().toJson(request));
         var res = new ResponseMessage();
         var Permission = new Permission();
         var exists = permissionsRepository.findByName(request.getName());
         if (exists.isPresent()) {
-            log.warn("Failed to create Permission ! Permission {} Already exists!", request.getName());
             res.setMessage("Permission " + request.getName() + " Already exists!");
             res.setStatus(false);
         } else {
@@ -78,7 +79,6 @@ public class PermissionsServiceImpl implements PermissionsService {
 
     @Override
     public Permission findPermissionById(Long id) {
-        log.info("Inside findPermissionById(Long id) {} ",new Date());
         return permissionsRepository.findById(id).orElse(null);
     }
 

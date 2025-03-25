@@ -21,7 +21,7 @@ public class PermissionsController {
     private final PermissionsService permissionsService;
 
 
-    private  final EncryptionService encryptionService;
+    private final EncryptionService encryptionService;
 
     public PermissionsController(PermissionsService permissionsService, EncryptionService encryptionService) {
         this.permissionsService = permissionsService;
@@ -30,7 +30,6 @@ public class PermissionsController {
 
 
     @GetMapping("/View")
-    @PreAuthorize("hasAuthority('PERMISSIONS_VIEW')")
     public ResponseEntity<?> ViewPermissionsWithPagination(@RequestParam(defaultValue = "0") int page,
                                                            @RequestParam(defaultValue = "10") int size,
                                                            @RequestHeader("key") String key) {
@@ -55,7 +54,6 @@ public class PermissionsController {
     }
 
     @GetMapping("/All")
-    @PreAuthorize("hasAuthority('PERMISSIONS_ALL')")
     public ResponseEntity<?> ViewPermissionsWithoutPagination(@RequestHeader("key") String key) {
         EncryptedResponse resBody = new EncryptedResponse();
         try {
@@ -78,7 +76,6 @@ public class PermissionsController {
     }
 
     @PostMapping("/Add")
-    @PreAuthorize("hasAuthority('PERMISSIONS_ADD')")
     public ResponseEntity<?> AddNewPermission(
             @RequestBody(required = false) String request,
             @RequestBody(required = false) PermissionRequest payload,
@@ -88,7 +85,7 @@ public class PermissionsController {
         var res = new ResponseMessage();
         try {
             PermissionRequest permissionRequest = encrypted
-                    ? encryptionService.decrypt(request, PermissionRequest.class,key)
+                    ? encryptionService.decrypt(request, PermissionRequest.class, key)
                     : new Gson().fromJson(request, PermissionRequest.class);
             res = permissionsService.createPermission(permissionRequest);
             HttpStatus status = (res != null && res.isStatus()) ? HttpStatus.CREATED : HttpStatus.EXPECTATION_FAILED;
@@ -108,8 +105,7 @@ public class PermissionsController {
         }
     }
 
-//    @PutMapping("/Update")
-//    @PreAuthorize("hasAuthority('PERMISSIONS_UPDATE')")
+    @PutMapping("/Update")
     public ResponseEntity<?> UpdatePermissionDetails(@RequestBody(required = false) String request,
                                                      @RequestBody(required = false) PermissionRequest payload,
                                                      @RequestParam(defaultValue = "false") boolean encrypted,
@@ -118,7 +114,7 @@ public class PermissionsController {
         var res = new ResponseMessage();
         try {
             PermissionRequest permissionRequest = encrypted
-                    ? encryptionService.decrypt(request, PermissionRequest.class,key)
+                    ? encryptionService.decrypt(request, PermissionRequest.class, key)
                     : new Gson().fromJson(request, PermissionRequest.class);
             res = permissionsService.updatePermission(permissionRequest);
             HttpStatus status = (res != null && res.isStatus()) ? HttpStatus.CREATED : HttpStatus.EXPECTATION_FAILED;

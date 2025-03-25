@@ -26,7 +26,6 @@ public class UsersController {
     }
 
     @PostMapping("/CreateUserAccount")
-    @PreAuthorize("hasAuthority('USERS_CREATEUSERACCOUNT')")
     public ResponseEntity<?> AddUserAccount(@RequestBody(required = false) String request,
                                             @RequestBody(required = false) UserAccountRequest payload,
                                             @RequestParam(defaultValue = "false") boolean encrypted,
@@ -54,7 +53,6 @@ public class UsersController {
     }
 
     @PostMapping("/CreateAdminAccount")
-    @PreAuthorize("hasAuthority('USERS_CREATEADMINACCOUNT')")
     public ResponseEntity<?> AddAdminAccount(@RequestBody(required = false) String request,
                                              @RequestBody(required = false) UserAccountRequest payload,
                                              @RequestParam(defaultValue = "false") boolean encrypted,
@@ -82,7 +80,6 @@ public class UsersController {
     }
 
     @PostMapping("/CreateSuperAdminAccount")
-    @PreAuthorize("hasAuthority('USERS_CREATESUPERADMINACCOUNT')")
     public ResponseEntity<?> CreateSuperAdminAccount(@RequestBody(required = false) String request,
                                                      @RequestBody(required = false) UserAccountRequest payload,
                                                      @RequestParam(defaultValue = "false") boolean encrypted,
@@ -110,7 +107,6 @@ public class UsersController {
     }
 
     @PostMapping("/ActivateDeactivate")
-    @PreAuthorize("hasAuthority('USERS_ACTIVATEDEACTIVATE')")
     public ResponseEntity<?> ActivateDeactivate(@RequestBody(required = false) String request,
                                                 @RequestBody(required = false) ActivateDeactivateRequest payload,
                                                 @RequestParam(defaultValue = "false") boolean encrypted,
@@ -140,7 +136,6 @@ public class UsersController {
     }
 
     @PostMapping("/SuperAdminAccounts")
-    @PreAuthorize("hasAuthority('USERS_SUPERADMINACCOUNTS')")
     public ResponseEntity<?> SuperAdminAccounts(@RequestBody(required = false) String request,
                                            @RequestBody(required = false) SuperAdminAccountsFilter payload,
                                            @RequestParam(defaultValue = "false") boolean encrypted,
@@ -169,7 +164,6 @@ public class UsersController {
     }
 
     @PostMapping("/AdminAccounts")
-    @PreAuthorize("hasAuthority('USERS_ADMINACCOUNTS')")
     public ResponseEntity<?> AdminAccounts(@RequestBody(required = false) String request,
                                           @RequestBody(required = false) AdminAccountsFilter payload,
                                           @RequestParam(defaultValue = "false") boolean encrypted,
@@ -198,7 +192,6 @@ public class UsersController {
     }
 
     @PostMapping("/UserAccounts")
-    @PreAuthorize("hasAuthority('USERS_USERACCOUNTS')")
     public ResponseEntity<?> UserAccounts(@RequestBody(required = false) String request,
                                            @RequestBody(required = false) UserAccountsFilter payload,
                                            @RequestParam(defaultValue = "false") boolean encrypted,
@@ -228,7 +221,6 @@ public class UsersController {
 
 
     @GetMapping("/Profile")
-    @PreAuthorize("hasAuthority('USERS_PROFILE')")
     public ResponseEntity<?> UserProfileDetails(@RequestParam("id") Long id,
                                                 @RequestHeader("key") String key) {
         EncryptedResponse resBody = new EncryptedResponse();
@@ -250,7 +242,6 @@ public class UsersController {
     }
 
     @PostMapping("/UserChangePassword")
-    @PreAuthorize("hasAuthority('USERS_USERCHANGEPASSWORD')")
     public ResponseEntity<?> UpdatePassword(@RequestBody(required = false) String request,
                                             @RequestBody(required = false) ChangePasswordRequest payload,
                                             @RequestParam(defaultValue = "false") boolean encrypted,
@@ -278,7 +269,6 @@ public class UsersController {
     }
 
     @PostMapping("/AdminChangeUserPassword")
-    @PreAuthorize("hasAuthority('USERS_ADMINCHANGEUSERPASSWORD')")
     public ResponseEntity<?> AdminUpdateUserPassword(@RequestBody(required = false) String request,
                                                      @RequestBody(required = false) AdminChangeUserPasswordRequest payload,
                                                      @RequestParam(defaultValue = "false") boolean encrypted,
@@ -306,7 +296,6 @@ public class UsersController {
     }
 
     @PutMapping("/ProfileUpdate")
-    @PreAuthorize("hasAuthority('USERS_PROFILEUPDATE')")
     public ResponseEntity<?> UpdateProfileDetails(
             @RequestBody(required = false) String request,
             @RequestBody(required = false) UpdateProfileRequest payload,
@@ -335,7 +324,6 @@ public class UsersController {
     }
 
     @PutMapping("/AdminUpdateUserProfile")
-    @PreAuthorize("hasAuthority('USERS_ADMINUPDATEUSERPROFILE')")
     public ResponseEntity<?> AdminUpdateUserProfile(
             @RequestBody(required = false) String request,
             @RequestBody(required = false) UpdateProfileRequest payload,

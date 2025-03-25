@@ -110,6 +110,37 @@ public class EncryptionServiceImpl implements EncryptionService {
         }
     }
 
+    @Override
+    public String  decrypt(String data, String key) {
+        try {
+            byte[] encryptedAesKey = Base64.decodeBase64(key);
+            if(data.contains(":")){
+                data = data.split(":")[1];
+            }
+            byte[] encryptedData = Base64.decodeBase64(data);
+            Cipher rsaCipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+            rsaCipher.init(Cipher.DECRYPT_MODE, loadPrivateKey());
+            byte[] decryptedAesKeyBytes = rsaCipher.doFinal(encryptedAesKey);
+            SecretKey aesKey = new SecretKeySpec(decryptedAesKeyBytes, "AES");
+            Cipher aesCipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+            aesCipher.init(Cipher.DECRYPT_MODE, aesKey, ivSpec);
+            byte[] decryptedData = aesCipher.doFinal(encryptedData);
+            String input = new String(decryptedData, StandardCharsets.UTF_8);
+            String json = input
+                    .replace("\\r\\n", "\n")
+                    .replace("\\\"", "\"")
+                    .replace("\\\\", "\\");
+
+            if (json.startsWith("\"") && json.endsWith("\"")) {
+                json = json.substring(1, json.length() - 1);
+            }
+            return json;
+        } catch (Exception e) {
+            log.error("Error decrypting data using RSA and AES {} ", e.getMessage());
+            return null;
+        }
+    }
+
     private SecretKey generateAESKey() {
         log.info("Inside generateAESKey()");
         log.info("Generating AES Key");

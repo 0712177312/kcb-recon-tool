@@ -19,7 +19,6 @@ public class AuditTrailsController {
     }
 
     //    @GetMapping("/View")
-//    @PreAuthorize("hasAuthority('AUDITTRAILS_VIEW')")
     public ResponseEntity<?> ViewAllLogs(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size){
         return new ResponseEntity<>(auditTrailsService.allAuditTrailsWithPagination(page, size), HttpStatus.OK);
     }

@@ -7,6 +7,8 @@ public class ServletInitializer extends SpringBootServletInitializer {
 
 	@Override
 	protected SpringApplicationBuilder configure(SpringApplicationBuilder application) {
-		return application.sources(ReconToolApplication.class);
+		return application.
+				 sources(ReconToolApplication.class)
+				.properties("spring.config.location=file:/var/recontool/core/configuration/application.properties");
 	}
 }

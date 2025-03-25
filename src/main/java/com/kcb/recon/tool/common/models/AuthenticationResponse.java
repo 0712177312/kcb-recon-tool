@@ -17,4 +17,5 @@ public class AuthenticationResponse {
     private boolean status;
     private String message="";
     private boolean firstLogin;
+    private boolean failedAdAuth;
 }

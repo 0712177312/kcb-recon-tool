@@ -19,14 +19,18 @@ import org.springframework.web.bind.annotation.*;
 @CrossOrigin
 public class CountriesController {
 
-    @Autowired
-    private CountriesService countriesService;
-    @Autowired
-    private EncryptionService encryptionService;
+
+    private final CountriesService countriesService;
+
+    private final EncryptionService encryptionService;
+
+    public CountriesController(CountriesService countriesService, EncryptionService encryptionService) {
+        this.countriesService = countriesService;
+        this.encryptionService = encryptionService;
+    }
 
 
     @PostMapping("/FilteredCountries")
-    @PreAuthorize("hasAuthority('COUNTRIES_FILTEREDCOUNTRIES')")
     public ResponseEntity<?> GetCountriesWithFilters(@RequestBody(required = false) String request,
                                                  @RequestBody(required = false) CountriesFilter payload,
                                                  @RequestParam(defaultValue = "false") boolean encrypted,
@@ -55,7 +59,6 @@ public class CountriesController {
     }
 
 //    @PostMapping("/ActivateDeactivate")
-//    @PreAuthorize("hasAuthority('COUNTRIES_ACTIVATEDEACTIVATE')")
     public ResponseEntity<?> ActivateDeactivate(@RequestBody(required = false) String request,
                                                 @RequestBody(required = false) ActivateDeactivateRequest payload,
                                                 @RequestParam(defaultValue = "false") boolean encrypted,
@@ -84,8 +87,7 @@ public class CountriesController {
         }
     }
 
-//    @GetMapping("/FindById")
-//    @PreAuthorize("hasAuthority('COUNTRIES_FINDBYID')")
+    @GetMapping("/FindById")
     public ResponseEntity<?> FindById(@RequestParam Long id, @RequestHeader("key") String key) {
         EncryptedResponse resBody = new EncryptedResponse();
         try {
@@ -106,7 +108,6 @@ public class CountriesController {
     }
 
     @GetMapping("/All")
-    @PreAuthorize("hasAuthority('COUNTRIES_ALL')")
     public ResponseEntity<?> ViewCountriesWithoutPagination(@RequestHeader("key") String key) {
         EncryptedResponse resBody = new EncryptedResponse();
         try {
@@ -160,7 +161,6 @@ public class CountriesController {
     }
 
 //    @PutMapping("/Update")
-//    @PreAuthorize("hasAuthority('COUNTRIES_UPDATE')")
     public ResponseEntity<?> UpdateCountryDetails(
             @RequestBody(required = false) String request,
             @RequestBody(required = false) CountryRequest payload,
