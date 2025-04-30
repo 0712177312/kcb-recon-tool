@@ -1,26 +1,18 @@
 package com.kcb.recon.tool.authentication.services.impl;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kcb.recon.tool.authentication.entities.*;
 import com.kcb.recon.tool.authentication.models.*;
-import com.kcb.recon.tool.authentication.repositories.PasswordChangeRepository;
-import com.kcb.recon.tool.authentication.repositories.PasswordResetRepository;
 import com.kcb.recon.tool.authentication.repositories.UsersRepository;
-import com.kcb.recon.tool.authentication.security.JwtTokenService;
-import com.kcb.recon.tool.authentication.services.PasswordHistoryService;
 import com.kcb.recon.tool.authentication.services.RolesService;
-//import com.kcb.recon.tool.authentication.services.UserSessionsService;
 import com.kcb.recon.tool.authentication.services.UsersService;
 import com.kcb.recon.tool.authentication.utils.ActiveDirectory;
-import com.kcb.recon.tool.authentication.utils.LdapErrorHandler;
 import com.kcb.recon.tool.common.enums.ChangeStatus;
 import com.kcb.recon.tool.common.enums.RecordStatus;
 import com.kcb.recon.tool.common.enums.ValidityStatus;
 import com.kcb.recon.tool.common.models.AuthenticationResponse;
-import com.kcb.recon.tool.common.models.NotificationsRequest;
 import com.kcb.recon.tool.common.models.ResponseMessage;
-import com.kcb.recon.tool.common.services.UtilitiesService;
 import com.google.gson.Gson;
+import com.kcb.recon.tool.configurations.repositories.CommonRepository;
 import com.kcb.recon.tool.configurations.services.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,11 +23,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import static com.kcb.recon.tool.authentication.utils.LdapErrorHandler.getFriendlyErrorMessage;
+import static com.kcb.recon.tool.authentication.utils.LdapErrorHandler.getErrorMessage;
 
 @Service
 @Slf4j
@@ -55,19 +45,13 @@ public class UsersServiceImpl implements UsersService {
     @Value("${org.default.users_password}")
     private String defaultUserPassword;
 
-
-    private final PasswordHistoryService passwordHistoryService;
+    private final SubsidiaryService subsidiaryService;
     private final UsersRepository userRepository;
-    private final JwtTokenService jwtService;
     private final RolesService rolesService;
     private final PasswordEncoder encoder;
-    private final UtilitiesService utilitiesService;
-    private final PasswordResetRepository passwordResetRepository;
     private final MenusService menusService;
-    private final PasswordChangeRepository passwordChangeRepository;
-//    private final UserSessionsService userSessionsService;
-    private final CountriesService countriesService;
     private final ActiveDirectory activeDirectory;
+    private final CommonRepository commonRepository;
     Gson gson = new Gson();
 
     @Override
@@ -91,7 +75,6 @@ public class UsersServiceImpl implements UsersService {
             res.setStatus(false);
             return res;
         }
-        // String password = utilitiesService.generatePassword(12, passwordPolicy);
         String password = defaultUserPassword;
         var user = new User();
         user.setFirstName(request.getFirstName());
@@ -116,24 +99,15 @@ public class UsersServiceImpl implements UsersService {
                 roles.add(role);
             }
         }
+        var subsidiary= subsidiaryService.findByCompanyCode(request.getCompanyCode());
+        if (subsidiary != null) {
+            user.setSubsidiary(subsidiary);
+        }
         user.setRoles(roles);
         userRepository.save(user);
         res.setStatus(true);
         res.setData(user);
         return res;
-    }
-
-
-    private NotificationsRequest getNotificationsRequest(User user, String smsBody, String emailBody, String subject) {
-        var notificationRequest = new NotificationsRequest();
-        notificationRequest.setEmailBody(emailBody);
-        notificationRequest.setSmsBody(smsBody);
-        notificationRequest.setSmsRecipient(user.getPhoneNumber());
-        notificationRequest.setSubject(subject);
-        notificationRequest.setAttach(false);
-        notificationRequest.setAttachment(null);
-        notificationRequest.setEmailRecipient(user.getEmailAddress());
-        return notificationRequest;
     }
 
     @Override
@@ -178,8 +152,6 @@ public class UsersServiceImpl implements UsersService {
         user.setRoles(roles);
         log.info("Saving admin account details");
         userRepository.save(user);
-        passwordHistoryService.addPasswordHistory(user, encoder.encode(password));
-
         res.setStatus(true);
         res.setData(user);
         log.info("Admin Account created successfully! {} ", gson.toJson(request));
@@ -216,7 +188,6 @@ public class UsersServiceImpl implements UsersService {
         user.setCreatedBy(request.getAdminName());
         user.setAdmin(true);
         user.setUsername(request.getUsername());
-        //user.setPlainPassword(plainPassword);
         user.setEmailAddress(request.getEmailAddress());
         user.setPhoneNumber(request.getPhoneNumber());
         user.setPassword(encoder.encode(password));
@@ -234,21 +205,14 @@ public class UsersServiceImpl implements UsersService {
         }
 
         user.setRoles(roles);
-        var country = countriesService.findById(request.getOrganization());
-        if (country != null) {
-            user.setCountry(country);
+        log.info("Company code {}", request.getCountry());
+        var subsidiary= subsidiaryService.findByCompanyName(request.getCountry());
+        log.info("Subsidiary details -> {} ", gson.toJson(subsidiary));
+        if (subsidiary != null) {
+            user.setSubsidiary(subsidiary);
         }
         log.info("Saving Superadmin account details");
         userRepository.save(user);
-        passwordHistoryService.addPasswordHistory(user, encoder.encode(password));
-
-        String sms = "Your credentials are : " +
-                "Username: " + user.getUsername() + " And " +
-                "Password: " + password + " .Kindly change the password after the first login.";
-        String email = "Hi,<br/>Your credentials are:<br/>" +
-                "<h3>Username: " + user.getUsername() + "</h3>" +
-                "<h3>Password: " + password + "</h3>" +
-                "<br/>Kindly change the password after the first login.";
         res.setStatus(true);
         res.setData(user);
         log.info("Superadmin Account created successfully! {} ", gson.toJson(request));
@@ -269,7 +233,7 @@ public class UsersServiceImpl implements UsersService {
 
         AdResponse adResponse = loginActiveDirectory(request.getUsername(), request.getPassword());
         log.info(" ad response | {}",adResponse);
-        String errorMessage = getFriendlyErrorMessage(adResponse);
+        String errorMessage = getErrorMessage(adResponse);
 
         if (adResponse.getCode() != 200) {
             return AuthenticationResponse.builder()
@@ -325,10 +289,6 @@ public class UsersServiceImpl implements UsersService {
         }
     }
 
-    @Override
-    public List<User> superAdminAccountsWithoutPagination() {
-        return userRepository.allSuperAdminAccountsWithoutPagination();
-    }
 
     @Override
     public Page<User> adminAccountsWithPaginationAndUserTypeFilter(AdminAccountsFilter request) {
@@ -370,88 +330,7 @@ public class UsersServiceImpl implements UsersService {
     }
 
     @Override
-    public ResponseMessage UserChangePassword(ChangePasswordRequest req) {
-        var res = new ResponseMessage();
-        var exists = userRepository.findByUsername(req.getUsername());
-        if (exists.isPresent()) {
-            var user = exists.get();
-            if (passwordHistoryService.isRecentPassword(user, req.getPassword())) {
-                log.info("Cannot change password | Password Provided was used recently!");
-                res.setMessage("Password Provided was used recently! Choose a new password!");
-                res.setStatus(false);
-            } else {
-                user.setModifiedBy(req.getUsername());
-                user.setModifiedOn(new Date());
-                user.setPassword(encoder.encode(req.getPassword()));
-                userRepository.save(user);
-                passwordHistoryService.addPasswordHistory(user, encoder.encode(req.getPassword()));
-                res.setStatus(true);
-                String sms = "Your new credentials are : " +
-                        "Username: " + user.getUsername() +
-                        " Password: " + req.getPassword();
-                String email = "Hi,<br/>Your new credentials are:<br/>" +
-                        "<h3>Username: " + user.getUsername() + "</h3>" +
-                        "<h3>Password: " + req.getPassword() + "</h3>";
-                log.info("User has updated password successfully!");
-                res.setMessage("Password Updated Successfully!");
-            }
-        } else {
-            log.info("Cannot change password | User does not exist!");
-            res.setMessage("User Does not exist!");
-            res.setStatus(false);
-        }
-        return res;
-    }
-
-    @Override
-    public ResponseMessage AdminChangeUserPassword(AdminChangeUserPasswordRequest req) {
-        var res = new ResponseMessage();
-        var password = utilitiesService.generatePassword(12, passwordPolicy);
-        var exists = userRepository.findByUsername(req.getUsername());
-        if (exists.isPresent()) {
-            var user = exists.get();
-            if (passwordHistoryService.isRecentPassword(user, password)) {
-                log.info("Cannot change user password | Password Provided was used recently!");
-                res.setMessage("Password Provided was used recently! Choose a new password!");
-                res.setStatus(false);
-            } else {
-                user.setModifiedBy(req.getAdminName());
-                user.setModifiedOn(new Date());
-                user.setPassword(encoder.encode(password));
-                userRepository.save(user);
-                var passChange = passwordChangeRepository.findByUsername(req.getUsername());
-                if (passChange.isPresent()) {
-                    var pc = passChange.get();
-                    pc.setDateReset(new Date());
-                    pc.setStatus(true);
-                    passwordChangeRepository.save(pc);
-                }
-                passwordHistoryService.addPasswordHistory(user, encoder.encode(password));
-                res.setStatus(true);
-
-                String sms = "Your new credentials are : " +
-                        "Username: " + user.getUsername() +
-                        " Password: " + password;
-                String email = "Hi,<br/>Your new credentials are:<br/>" +
-                        "<h3>Username: " + user.getUsername() + "</h3>" +
-                        "<h3>Password: " + password + "</h3>";
-
-                log.info("User password updated successfully!");
-                res.setMessage("Password Updated Successfully!");
-            }
-        } else {
-            log.info("User does not exist | Cannot change password");
-            res.setMessage("User Does not exist!");
-            res.setStatus(false);
-        }
-        return res;
-    }
-
-
-    @Override
     public ResponseMessage SuperAdminUpdateProfile(UpdateProfileRequest req) {
-        log.info("Inside SuperAdminUpdateProfile(UpdateProfileRequest req) At {} ", new Date());
-        log.info("Superadmin Updating user profile");
         log.info("Profile Request -> {} ", gson.toJson(req));
         var res = new ResponseMessage();
         var exists = userRepository.findById(req.getId());
@@ -471,9 +350,9 @@ public class UsersServiceImpl implements UsersService {
             user.setGender(req.getGender());
             user.setEmailAddress(req.getEmailAddress());
             user.setPhoneNumber(req.getPhoneNumber());
-            var country = countriesService.findById(req.getCountry());
-            if (country != null) {
-                user.setCountry(country);
+            var subsidiary= subsidiaryService.findByCompanyName(req.getCompanyName());
+            if (subsidiary != null) {
+                user.setSubsidiary(subsidiary);
             }
             userRepository.save(user);
             res.setStatus(true);
@@ -490,23 +369,36 @@ public class UsersServiceImpl implements UsersService {
     @Override
     public ResponseMessage AdminUpdateUserProfile(UpdateProfileRequest req) {
         log.info("Inside AdminUpdateUserProfile(UpdateProfileRequest req) At {} ", new Date());
-        log.info("Admin Updating user profile");
-        log.info("Request (AdminUpdateUserProfile(UpdateProfileRequest req)) -> {} ", gson.toJson(req));
+        log.info("user details to be updated | {}",new Gson().toJson(req));
         var res = new ResponseMessage();
         var exists = userRepository.findById(req.getId());
         if (exists.isPresent()) {
             var user = exists.get();
-            user.setChangeStatus(ChangeStatus.Pending.name());
+            user.setChangeStatus(ChangeStatus.Approved.name());
             user.setModifiedBy(req.getModifiedBy());
             user.setModifiedOn(new Date());
             user.setNewValues(new Gson().toJson(req));
-            var currRecord = new Gson().toJson(user);
-            var updatedRecord = buildUpdatedRecord(currRecord, req);
-            user.setChangedValues(updatedRecord);
+            if (req.isAcctStatus()) {
+                user.setStatus(RecordStatus.Active.name());
+            } else {
+                user.setStatus(RecordStatus.Inactive.name());
+            }
+            user.setUserId(req.getUserId());
+            user.setFirstName(req.getFirstName());
+            for (var r : req.getRoles()) {
+                commonRepository.updateUserRoles(r,req.getId());
+            }
+            var subsidiary= subsidiaryService.findByCompanyCode(req.getCompanyCode());
+            if (subsidiary != null) {
+                user.setSubsidiary(subsidiary);
+            }
+            user.setOtherNames(req.getOtherNames());
+            user.setGender(req.getGender());
+            user.setEmailAddress(req.getEmailAddress());
+            user.setPhoneNumber(req.getPhoneNumber());
             userRepository.save(user);
             res.setStatus(true);
-            res.setMessage("Processed Successfully!");
-            log.info("User Profile Update Initiated successfully!");
+            res.setMessage("User Profile Updated successfully!!");
         } else {
             log.warn("User does not exist! Admin request to update user profile cannot be processed!");
             res.setMessage("User Does not exist!");
@@ -524,6 +416,13 @@ public class UsersServiceImpl implements UsersService {
         }
         user.setUserId(req.getUserId());
         user.setFirstName(req.getFirstName());
+        for (var r : req.getRoles()) {
+            commonRepository.updateUserRoles(r,req.getId());
+        }
+        var subsidiary= subsidiaryService.findByCompanyCode(req.getCompanyCode());
+        if (subsidiary != null) {
+            user.setSubsidiary(subsidiary);
+        }
         user.setOtherNames(req.getOtherNames());
         user.setGender(req.getGender());
         user.setEmailAddress(req.getEmailAddress());
@@ -564,83 +463,7 @@ public class UsersServiceImpl implements UsersService {
         return res;
     }
 
-    @Override
-    public ResponseMessage ResetPassword(PasswordResetRequest req) {
-        log.info("Inside ResetPassword(PasswordResetRequest req) At -> {} ", new Date());
-        log.info("Reset Password Request -> {} ", gson.toJson(req));
-        var res = new ResponseMessage();
-        var user = userRepository.findByEmailAddress(req.getEmail());
-        String username = "";
-        if (user.isPresent()) {
-            username = user.get().getUsername();
-            var token = passwordResetRepository.findByUsernameAndToken(username, req.getToken());
-            if (token.isPresent()) {
-                LocalDateTime now = LocalDateTime.now();
-                LocalDateTime expiryDate = token.get().getExpiryDate();
-                if (now.isAfter(expiryDate)) {
-                    log.warn("Password reset token provided is expired! Cannot reset password!");
-                    res.setMessage("Token Already Expired!");
-                    res.setData(null);
-                    res.setStatus(false);
-                } else {
-                    log.info("Password reset successfully!");
-                    var u = user.get();
-                    if (passwordHistoryService.isRecentPassword(u, req.getPassword())) {
-                        log.info("Cannot Reset password | Password Provided was used recently!");
-                        res.setMessage("Password Provided was used recently! Choose a new password!");
-                        res.setStatus(false);
-                    } else {
-                        u.setPassword(encoder.encode(req.getPassword()));
-                        passwordHistoryService.addPasswordHistory(u, encoder.encode(req.getPassword()));
-                        userRepository.save(u);
-                        var tk = token.get();
-                        tk.setStatus(true);
-                        passwordResetRepository.save(tk);
-                        res.setMessage("Password Updated Successfully!");
-                        res.setData(u);
-                        res.setStatus(true);
-                    }
-                }
-            } else {
-                log.warn("The password reset token provided is invalid!");
-                res.setMessage("Invalid Token!");
-                res.setStatus(false);
-            }
-        } else {
-            log.warn("{} Does not exist! Cannot reset password", req.getEmail());
-            res.setMessage(req.getEmail() + " Does not exist!");
-            res.setStatus(false);
-        }
-        return res;
-    }
 
-    @Override
-    public ResponseMessage firstTimeLoginChangePassword(FirstTimePasswordChangeRequest req) {
-        var res = new ResponseMessage();
-        var exists = userRepository.findByUsername(req.getUsername());
-        if (exists.isPresent()) {
-            var user = exists.get();
-            if (passwordHistoryService.isRecentPassword(user, req.getPassword())) {
-                res.setMessage("Password Provided was used recently! Choose a new password!");
-                res.setStatus(false);
-            } else {
-                user.setModifiedBy(req.getUsername());
-                user.setModifiedOn(new Date());
-                user.setPassword(encoder.encode(req.getPassword()));
-                user.setFirstTimeLogin(false);
-                userRepository.save(user);
-                passwordHistoryService.addPasswordHistory(user, encoder.encode(req.getPassword()));
-                res.setStatus(true);
-                log.info("User has updated password successfully during first login!");
-                res.setMessage("Password Updated Successfully!");
-            }
-        } else {
-            log.info("Cannot change password during first time log in | User does not exist!");
-            res.setMessage("User Does not exist!");
-            res.setStatus(false);
-        }
-        return res;
-    }
 
     @Override
     public List<User> allUserAccounts() {
@@ -649,47 +472,9 @@ public class UsersServiceImpl implements UsersService {
         return userRepository.findAll();
     }
 
-
-    @Override
-    public ResponseMessage sendPasswordResetRequest(String email) {
-        log.info("Inside sendPasswordResetRequest(String email) At {} ", new Date());
-        log.info("User request to admin to change their password | Email {} ", email);
-        var res = new ResponseMessage();
-        var user = userRepository.findByEmailAddress(email);
-        if (user.isPresent()) {
-            List<User> admins;
-            admins = userRepository.allSuperAdminAccountsWithoutPagination();
-
-            Random random = new Random();
-            int randomIndex = random.nextInt(admins.size());
-            var selectedAdmin = admins.get(randomIndex);
-            var request = new PasswordChange();
-            var data = passwordChangeRepository.findByUsername(user.get().getUsername());
-            if (data.isPresent()) {
-                request = data.get();
-                request.setDateSent(new Date());
-                request.setStatus(false);
-                request.setSentTo(selectedAdmin.getUsername());
-            } else {
-                request.setDateSent(new Date());
-                request.setUsername(user.get().getUsername());
-                request.setStatus(false);
-                request.setSentTo(selectedAdmin.getUsername());
-            }
-            passwordChangeRepository.save(request);
-            res.setStatus(true);
-            res.setMessage("Successful!");
-            return res;
-
-        }
-        return null;
-    }
-
-
     @Override
     public void logout(String username) {
         log.info("Inside logout(String username) {} At {}", username, new Date());
-
         var user  =userRepository.findByUsername(username);
         user.ifPresent(value ->log.info("user-id |{}",user.get().getId()));
         user.ifPresent(value ->userRepository.updateLoggedIn(value.getId()));

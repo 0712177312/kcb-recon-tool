@@ -5,7 +5,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.kcb.recon.tool.authentication.models.AdResponse;
 import lombok.extern.slf4j.Slf4j;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -30,7 +29,7 @@ public class LdapErrorHandler {
         ERROR_MAP.put("775", "Account locked.");
     }
 
-    public static String getFriendlyErrorMessage(AdResponse adResponseJson) {
+    public static String getErrorMessage(AdResponse adResponseJson) {
         try {
 
             String jsonString = gson.toJson(adResponseJson);
@@ -39,7 +38,6 @@ public class LdapErrorHandler {
                 String ldapMessage = jsonObject.get("message").getAsString();
                 log.info("l-dap-message {}", ldapMessage);
                 Pattern pattern = Pattern.compile("data\\s+([0-9a-fA-F]+)");
-
                 log.info("pattern |{}", pattern);
                 Matcher matcher = pattern.matcher(ldapMessage);
                 log.info("matcher |{}", matcher);

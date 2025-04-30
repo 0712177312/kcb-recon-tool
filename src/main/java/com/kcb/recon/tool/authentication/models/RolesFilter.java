@@ -11,5 +11,4 @@ public class RolesFilter {
     private String status;
     private int page;
     private int size;
-    private Long organization;
 }

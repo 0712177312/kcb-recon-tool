@@ -1,10 +1,8 @@
 package com.kcb.recon.tool.common.controllers;
 
 import com.kcb.recon.tool.common.services.AuditTrailsService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -18,8 +16,8 @@ public class AuditTrailsController {
         this.auditTrailsService = auditTrailsService;
     }
 
-    //    @GetMapping("/View")
-    public ResponseEntity<?> ViewAllLogs(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size){
-        return new ResponseEntity<>(auditTrailsService.allAuditTrailsWithPagination(page, size), HttpStatus.OK);
-    }
+//    @GetMapping("/View")
+//    public ResponseEntity<?> ViewAllLogs(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size){
+//        return new ResponseEntity<>(auditTrailsService.allAuditTrailsWithPagination(page, size), HttpStatus.OK);
+//    }
 }

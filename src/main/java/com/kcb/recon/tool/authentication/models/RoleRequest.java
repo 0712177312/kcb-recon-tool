@@ -1,5 +1,6 @@
 package com.kcb.recon.tool.authentication.models;
 
+import com.kcb.recon.tool.common.models.SubMenuDTO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -16,4 +17,6 @@ public class RoleRequest {
     private Long organization;
     private boolean status;
     List<Long> permissions = new ArrayList<>();
+    private List<String> menus = new ArrayList<>();
+    private List<String> submenus = new ArrayList<>();
 }

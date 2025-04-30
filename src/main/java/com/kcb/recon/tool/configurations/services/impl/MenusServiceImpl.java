@@ -1,76 +1,103 @@
 package com.kcb.recon.tool.configurations.services.impl;
 
-import com.kcb.recon.tool.configurations.models.Menu;
-import com.kcb.recon.tool.configurations.models.MenuPermission;
-import com.kcb.recon.tool.configurations.models.SubMenu;
-import com.kcb.recon.tool.configurations.models.SubMenuPermission;
+import com.kcb.recon.tool.authentication.utils.AppUtillities;
+import com.kcb.recon.tool.configurations.extras.Menu1;
+import com.kcb.recon.tool.configurations.extras.MenuPermission1;
+import com.kcb.recon.tool.configurations.extras.SubMenu1;
+import com.kcb.recon.tool.configurations.extras.SubMenuPermission1;
+import com.kcb.recon.tool.configurations.repositories.CommonRepository;
+import com.kcb.recon.tool.configurations.repositories.MenuRepository;
 import com.kcb.recon.tool.configurations.services.MenusService;
-import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.io.FileReader;
-import java.io.IOException;
-import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
+
 
 @Service
 @Slf4j
 public class MenusServiceImpl implements MenusService {
 
-    @Value("${menus.file.path}")
-    private String menusFile;
 
+    private final MenuRepository menuRepository;
+    private final CommonRepository commonRepository;
 
-    public List<Menu> loadMenusFromFile() {
-        log.info("Loading menus from JSON file at path: {}", menusFile);
-        try (FileReader fileReader = new FileReader(Paths.get(menusFile).toFile())) {
-            Gson gson = new Gson();
-            return List.of(gson.fromJson(fileReader, Menu[].class));
-        } catch (IOException e) {
-            log.error("Failed to load menus from JSON file. Error: {}", e.getMessage(), e);
-        }
-        return null;
+    public MenusServiceImpl(MenuRepository menuRepository, CommonRepository commonRepository1) {
+        this.menuRepository = menuRepository;
+        this.commonRepository = commonRepository1;
     }
 
+
+    public List<Menu1> loadMenusFromDatabase() {
+        List<Menu1> menuList = new ArrayList<>();
+        try {
+            menuList = menuRepository.findAll();
+        } catch (Exception e) {
+            String logMessage = AppUtillities.logPreString() + AppUtillities.ERROR + e.getMessage()
+                    + AppUtillities.STACKTRACE + AppUtillities.getExceptionStacktrace(e);
+            log.error("log-message -> {}", logMessage);
+        }
+        return menuList;
+    }
+
+
     @Override
-    public List<Menu> findMenusAndSubMenusByListOfRoles(List<String> roles) {
-        List<Menu> accessibleMenus = new ArrayList<>();
+    public List<Menu1> findMenusAndSubMenusByListOfRoles(List<String> roles) {
+        List<Menu1> accessibleMenus = new ArrayList<>();
 
         if (roles != null && !roles.isEmpty()) {
-            List<Menu> allParentMenus = loadMenusFromFile();
+            List<Menu1> allParentMenus = loadMenusFromDatabase();
+            log.info("Loading all menus from database | {}", allParentMenus.size());
 
-            for (Menu menu : allParentMenus) {
-                List<SubMenu> accessibleSubMenus = menu.getChildren()
-                        .stream()
-                        .filter(subMenu -> isSubMenuAccessibleByRoles(subMenu, roles))
-                        .toList();
+            for (Menu1 menu : allParentMenus) {
+                MenuPermission1 menuPermission = commonRepository.getMenuPermission(menu.getId());
+                log.info("menuPermission | {}", menuPermission.toString());
 
-                if (!accessibleSubMenus.isEmpty() || isParentAccessibleByRoles(menu, roles)) {
-                    menu.setChildren(accessibleSubMenus);
+                if (isMenuAccessible(menuPermission, roles)) {
+                    menu.setPermissions(menuPermission);
+                    menu.setChildren(findSubMenusByListOfRoles(menu.getId(), roles));
                     accessibleMenus.add(menu);
                 }
             }
         }
+
         return accessibleMenus;
     }
+    public List<SubMenu1> findSubMenusByListOfRoles(Long menuID, List<String> roles) {
+        List<SubMenu1> accessibleSubMenus = new ArrayList<>();
+        List<SubMenu1> allSubMenus = commonRepository.getSubmenus(menuID);
 
-    private boolean isParentAccessibleByRoles(Menu menu, List<String> roles) {
-        MenuPermission permissions = menu.getPermissions();
-        if (permissions != null && permissions.getOnly() != null && !permissions.getOnly().isEmpty()) {
-            return roles.stream().anyMatch(permissions.getOnly()::contains);
+        for (SubMenu1 subMenu : allSubMenus) {
+            SubMenuPermission1 subMenuPermission = commonRepository.getSubMenuPermission(subMenu.getId());
+
+            if (isSubMenuAccessible(subMenuPermission, roles)) {
+                subMenu.setPermissions(subMenuPermission);
+                accessibleSubMenus.add(subMenu);
+            }
         }
-        return true;
+
+        return accessibleSubMenus;
     }
 
-    private boolean isSubMenuAccessibleByRoles(SubMenu subMenu, List<String> roles) {
-        SubMenuPermission permissions = subMenu.getPermissions();
-        if (permissions != null && permissions.getOnly() != null && !permissions.getOnly().isEmpty()) {
-            return roles.stream().anyMatch(permissions.getOnly()::contains);
-        }
-        return true;
+    @Override
+    public List<Menu1> findAll() {
+        return menuRepository.findAll();
     }
+    private boolean isMenuAccessible(MenuPermission1 permission, List<String> roles) {
+        if (permission == null || permission.getAllowed() == null || permission.getAllowed().isEmpty()) {
+            return false; // no allowed roles defined
+        }
+
+        return roles.stream().anyMatch(permission.getAllowed()::contains);
+    }
+
+    private boolean isSubMenuAccessible(SubMenuPermission1 permission, List<String> roles) {
+        if (permission == null || permission.getAllowed() == null || permission.getAllowed().isEmpty()) {
+            return false;
+        }
+
+        return roles.stream().anyMatch(permission.getAllowed()::contains);
+    }
+
 }

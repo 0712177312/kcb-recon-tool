@@ -19,7 +19,6 @@ public class EncryptionDecryptionController {
     }
 
     @GetMapping("/double/key")
-    //Call this to manually get aes key which will be encrypted using rsa
     public ResponseEntity<?> GetAESKey(){
         return new ResponseEntity<>(encryptionService.encryptAESKeyWithRSA(),HttpStatus.OK);
     }
@@ -27,6 +26,7 @@ public class EncryptionDecryptionController {
     @PostMapping("/double/encrypt")
     public ResponseEntity<?> DoubleEncrypt(@RequestBody String request,
                                            @RequestHeader("key") String key){
+
         return new ResponseEntity<>(encryptionService.encrypt(new Gson().toJson(request),key),HttpStatus.OK);
     }
 

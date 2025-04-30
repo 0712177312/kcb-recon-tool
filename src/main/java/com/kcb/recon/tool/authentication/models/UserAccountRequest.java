@@ -22,6 +22,9 @@ public class UserAccountRequest {
     private String userId;
     private String adminName;
     private Long organization;
+    private String companyName;
+    private String companyCode;
+    private String country;
     private Long branch;
     List<Long> roles = new ArrayList<>();
 }

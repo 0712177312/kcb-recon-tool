@@ -1,8 +1,8 @@
 package com.kcb.recon.tool.authentication.entities;
 
 import com.kcb.recon.tool.common.entities.Auditing;
-import com.kcb.recon.tool.configurations.entities.Country;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.kcb.recon.tool.configurations.entities.Subsidiary;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
@@ -55,8 +55,8 @@ public class User extends Auditing implements UserDetails {
     private Set<Role> roles = new HashSet<>();
 
     @ManyToOne
-    @JoinColumn(name = "country_id")
-    private Country country;
+    @JoinColumn(name = "subsidiary_id")
+    private Subsidiary subsidiary;
 
     @Column(name = "first_time_login")
     private boolean firstTimeLogin = true;

@@ -6,10 +6,8 @@ import com.kcb.recon.tool.common.models.EncryptedResponse;
 import com.kcb.recon.tool.common.models.ResponseMessage;
 import com.kcb.recon.tool.common.services.EncryptionService;
 import com.google.gson.Gson;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -78,7 +76,6 @@ public class PermissionsController {
     @PostMapping("/Add")
     public ResponseEntity<?> AddNewPermission(
             @RequestBody(required = false) String request,
-            @RequestBody(required = false) PermissionRequest payload,
             @RequestParam(defaultValue = "false") boolean encrypted,
             @RequestHeader("key") String key) {
         EncryptedResponse resBody = new EncryptedResponse();
@@ -107,7 +104,6 @@ public class PermissionsController {
 
     @PutMapping("/Update")
     public ResponseEntity<?> UpdatePermissionDetails(@RequestBody(required = false) String request,
-                                                     @RequestBody(required = false) PermissionRequest payload,
                                                      @RequestParam(defaultValue = "false") boolean encrypted,
                                                      @RequestHeader("key") String key) {
         EncryptedResponse resBody = new EncryptedResponse();

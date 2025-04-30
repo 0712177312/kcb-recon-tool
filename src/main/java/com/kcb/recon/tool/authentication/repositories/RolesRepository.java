@@ -14,28 +14,19 @@ import java.util.Optional;
 public interface RolesRepository extends JpaRepository<Role,Long> {
     @Query(nativeQuery = true, value = "SELECT * FROM roles WHERE TRIM(name) = TRIM(:name)")
     Optional<Role> findByName(@Param("name") String name);
-    Optional<Role> findByNameAndOrganization(String name,Long organization);
     @Query(nativeQuery = true, value = "SELECT * FROM roles WHERE validity_status = :status")
     Page<Role> filterWithPaginationStatusProvidedForReviewList(@Param("status") String status, Pageable pageable);
     @Query(nativeQuery = true,value = "SELECT * FROM roles WHERE validity_status='Pending' AND status='Inactive'")
     Page<Role> filterWithPaginationForReviewListPendingOnly( Pageable pageable);
-    @Query(nativeQuery = true,value = "SELECT * FROM roles WHERE organization=:organization")
-    Page<Role> allWithPagination(@Param("organization") Long organization,Pageable pageable);
-    @Query(nativeQuery = true, value = "SELECT * FROM roles WHERE status = :status AND organization=:organization")
-    Page<Role> filterWithPaginationStatusProvided(@Param("organization") Long organization,@Param("status") String status, Pageable pageable);
-    @Query(nativeQuery = true,value = "SELECT * FROM roles WHERE validity_status='Approved' AND status='Active' AND organization IS NULL")
-    List<Role> allWithoutPaginationForSuperAdmin();
-    @Query(nativeQuery = true,value = "SELECT * FROM roles WHERE validity_status='Approved' AND status='Active' AND organization=:organization")
-    List<Role> allWithoutPaginationForAdmin(@Param("organization") Long organization);
     @Query(nativeQuery = true,value = "SELECT * FROM roles")
-    List<Role> allWithoutPaginationForOrganizationNoFilter();
-    @Query(nativeQuery = true, value = "SELECT * FROM roles WHERE change_status = :status AND organization IS NOT NULL AND organization=:organization")
-    Page<Role> filterWithPaginationStatusProvidedForModificationsReviewList(@Param("organization") Long organization,@Param("status") String status, Pageable pageable);
-    @Query(nativeQuery = true,value = "SELECT * FROM roles WHERE change_status='Pending' AND organization IS NOT NULL AND organization=:organization")
-    Page<Role> filterWithPaginationForModificationsReviewListPendingOnly(@Param("organization") Long organization, Pageable pageable);
-    @Query(nativeQuery = true,value = "SELECT * FROM roles WHERE organization IS NULL")
+    List<Role> allWithoutPagination();
+    @Query(nativeQuery = true, value = "SELECT * FROM roles WHERE status = :status")
+    Page<Role> filterWithPaginationStatusProvided(@Param("status") String status, Pageable pageable);
+    @Query(nativeQuery = true,value = "SELECT * FROM roles WHERE validity_status='Approved' AND status='Active'")
+    List<Role> allWithoutPaginationForSuperAdmin();
+    @Query(nativeQuery = true,value = "SELECT * FROM roles ")
     Page<Role> allAdminRolesWithPagination(Pageable pageable);
-    @Query(nativeQuery = true,value = "SELECT * FROM roles WHERE organization IS NULL AND status =:status")
+    @Query(nativeQuery = true,value = "SELECT * FROM roles WHERE status =:status")
     Page<Role> filterAdminRolesWithPaginationStatusProvided(@Param("status") String status,Pageable pageable);
 
 }

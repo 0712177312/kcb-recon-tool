@@ -1,35 +1,160 @@
 [
   {
-    "route": "/admin",
-    "name": "Device Management",
+    "route": "dashboard",
+    "name": "DASHBOARD",
     "type": "link",
-    "icon": "desktop",
+    "icon": "home",
     "badge": null,
     "permissions": {
-      "only": ["ROLE_SUPER_ADMIN"],
-      "denied": ["ROLE_GUEST"]
+      "allowed": ["ROLE_SUPER_ADMIN", "USERS"],
+      "denied": []
+    },
+    "children": []
+  },
+  {
+    "route": "usermanagement",
+    "name": "USERMANAGEMENT",
+    "type": "sub",
+    "icon": "person",
+    "badge": null,
+    "permissions": {
+      "allowed": ["ROLE_SUPER_ADMIN"],
+      "denied": []
     },
     "children": [
       {
-        "route": "/admin/device-inventory",
-        "name": "Device Inventory",
-        "type": "sub",
-        "icon": "list-alt",
+        "route": "superadminusers",
+        "name": "ADMIN USERS",
+        "type": "link",
+        "icon": "admin_panel_settings",
         "badge": null,
         "permissions": {
-          "only": ["ROLE_SUPER_ADMIN"],
-          "denied": ["ROLE_ADMIN"]
+          "allowed": ["ROLE_SUPER_ADMIN",""],
+          "denied": []
         }
       },
       {
-        "route": "/admin/device-status",
-        "name": "Device Status",
-        "type": "sub",
-        "icon": "cogs",
+        "route": "admin-roles",
+        "name": "ROLES",
+        "type": "link",
+        "icon": "supervisor_account",
         "badge": null,
         "permissions": {
-          "only": ["ROLE_SUPER_ADMIN"],
-          "denied": ["ROLE_USER"]
+          "allowed": ["ROLE_SUPER_ADMIN"],
+          "denied": []
+        }
+      },
+      {
+        "route": "users",
+        "name": "USERS",
+        "type": "link",
+        "icon": "groups",
+        "badge": null,
+        "permissions": {
+          "allowed": ["ROLE_SUPER_ADMIN","USERS"],
+          "denied": []
+        }
+      }
+
+    ]
+  },
+  {
+    "route": "Configurations",
+    "name": "CONFIGURATION",
+    "type": "sub",
+    "icon": "settings",
+    "badge": null,
+    "permissions": {
+      "allowed": ["ROLE_SUPER_ADMIN"],
+      "denied": []
+    },
+    "children": [
+      {
+        "route": "countries",
+        "name": "COUNTRIES",
+        "type": "link",
+        "icon": "public",
+        "badge": null,
+        "permissions": {
+          "allowed": ["ROLE_SUPER_ADMIN"],
+          "denied": []
+        }
+      },
+      {
+        "route": "use-case",
+        "name": "USECASE",
+        "type": "link",
+        "icon": "psychology",
+        "badge": null,
+        "permissions": {
+          "allowed": ["ROLE_SUPER_ADMIN"],
+          "denied": []
+        }
+      },
+      {
+        "route": "Scenario",
+        "name": "SCENARIO",
+        "type": "link",
+        "icon": "analytics",
+        "badge": null,
+        "permissions": {
+          "allowed": ["ROLE_SUPER_ADMIN"],
+          "denied": []
+        }
+      },
+      {
+        "route": "datasource",
+        "name": "DATASOURCE",
+        "type": "link",
+        "badge": null,
+        "permissions": {
+          "allowed": ["ROLE_SUPER_ADMIN"],
+          "denied": []
+        }
+      },
+      {
+        "route": "datasourceparams",
+        "name": "DATASOURCE PARAMS",
+        "type": "link",
+        "badge": null,
+        "permissions": {
+          "allowed": ["ROLE_SUPER_ADMIN"],
+          "denied": []
+        }
+      },
+      {
+        "route": "list-matching-param-rules",
+        "name": "MATCHING RULES",
+        "type": "link",
+        "icon": "rule",
+        "badge": null,
+        "permissions": {
+          "allowed": ["ROLE_SUPER_ADMIN"],
+          "denied": []
+        }
+      }
+    ]
+  },
+  {
+    "route": "reports",
+    "name": "REPORTS",
+    "type": "sub",
+    "icon": "bar_chart",
+    "badge": null,
+    "permissions": {
+      "allowed": ["ROLE_SUPER_ADMIN","USERS"],
+      "denied": []
+    },
+    "children": [
+      {
+        "route": "list-exceptions",
+        "name": "EXCEPTIONS REPORT",
+        "type": "link",
+        "icon": "rule",
+        "badge": null,
+        "permissions": {
+          "allowed": ["ROLE_SUPER_ADMIN","USERS"],
+          "denied": []
         }
       }
     ]

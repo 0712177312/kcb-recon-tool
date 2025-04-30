@@ -1,5 +1,6 @@
 package com.kcb.recon.tool.common.services.impl;
 
+import com.kcb.recon.tool.authentication.utils.AppUtillities;
 import com.kcb.recon.tool.common.services.EncryptionService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
@@ -8,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
@@ -35,13 +37,10 @@ public class EncryptionServiceImpl implements EncryptionService {
     @Value("${public.key.path}")
     private String publicKeyPath;
 
-    private final ObjectMapper objectMapper;
-
     private final IvParameterSpec ivSpec = new IvParameterSpec(new byte[16]);
 
     @Override
-    public String encrypt(String data,String encryptedKey) {
-        log.info("Inside encrypt(String data,String encryptedKey)");
+    public String encrypt(String data, String encryptedKey) {
         try {
             log.info("Encrypting data using hybrid encryption (AES + RSA)");
             Cipher rsaCipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
@@ -53,7 +52,9 @@ public class EncryptionServiceImpl implements EncryptionService {
             byte[] encryptedData = aesCipher.doFinal(data.getBytes());
             return Base64.encodeBase64String(encryptedData);
         } catch (Exception e) {
-            log.error("Error encrypting data using RSA and AES", e);
+            String logMessage = AppUtillities.logPreString() + AppUtillities.ERROR + e.getMessage()
+                    + AppUtillities.STACKTRACE + AppUtillities.getExceptionStacktrace(e);
+            log.error("log-message -> {}", logMessage);
             return null;
         }
     }
@@ -69,21 +70,20 @@ public class EncryptionServiceImpl implements EncryptionService {
             assert aesKey != null;
             byte[] encryptedAesKey = rsaCipher.doFinal(aesKey.getEncoded());
             return Base64.encodeBase64String(encryptedAesKey);
-        }
-        catch (Exception e){
-            log.error("Error encrypting AES key | {} ",e.getMessage());
+        } catch (Exception e) {
+            log.error("Error encrypting AES key | {} ", e.getMessage());
             return null;
         }
     }
 
 
     @Override
-    public <T> T decrypt(String data, Class<T> type,String key) {
+    public <T> T decrypt(String data, Class<T> type, String key) {
         try {
-            log.info("Inside decrypt(String data, Class<T> type,String key) At {} ",new Date());
+            log.info("Inside decrypt(String data, Class<T> type,String key) At {} ", new Date());
             log.info("Decrypting data using hybrid encryption (RSA + AES)");
             byte[] encryptedAesKey = Base64.decodeBase64(key);
-            if(data.contains(":")){
+            if (data.contains(":")) {
                 data = data.split(":")[1];
             }
             byte[] encryptedData = Base64.decodeBase64(data);
@@ -105,16 +105,18 @@ public class EncryptionServiceImpl implements EncryptionService {
             }
             return new Gson().fromJson(json, type);
         } catch (Exception e) {
-            log.error("Error decrypting data using RSA and AES {} ", e.getMessage());
+            String logMessage = AppUtillities.logPreString() + AppUtillities.ERROR + e.getMessage()
+                    + AppUtillities.STACKTRACE + AppUtillities.getExceptionStacktrace(e);
+            log.error("log-message -> {}", logMessage);
             return null;
         }
     }
 
     @Override
-    public String  decrypt(String data, String key) {
+    public String decrypt(String data, String key) {
         try {
             byte[] encryptedAesKey = Base64.decodeBase64(key);
-            if(data.contains(":")){
+            if (data.contains(":")) {
                 data = data.split(":")[1];
             }
             byte[] encryptedData = Base64.decodeBase64(data);
@@ -149,7 +151,7 @@ public class EncryptionServiceImpl implements EncryptionService {
             keyGenerator.init(256);
             return keyGenerator.generateKey();
         } catch (NoSuchAlgorithmException e) {
-            log.error("Failed to Generate AES Key -> {} ",e.getMessage());
+            log.error("Failed to Generate AES Key -> {} ", e.getMessage());
             return null;
         }
     }

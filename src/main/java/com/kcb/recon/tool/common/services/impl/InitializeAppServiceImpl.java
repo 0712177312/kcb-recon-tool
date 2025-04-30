@@ -6,12 +6,12 @@ import com.kcb.recon.tool.authentication.models.UserAccountRequest;
 import com.kcb.recon.tool.authentication.services.PermissionsService;
 import com.kcb.recon.tool.authentication.services.RolesService;
 import com.kcb.recon.tool.authentication.services.UsersService;
+import com.kcb.recon.tool.common.enums.RecordStatus;
 import com.kcb.recon.tool.common.services.InitializeAppService;
 import com.kcb.recon.tool.common.services.UtilitiesService;
 import com.kcb.recon.tool.authentication.entities.Permission;
-import com.kcb.recon.tool.configurations.models.CountryRequest;
-import com.kcb.recon.tool.configurations.models.UserAccountTypeRequest;
-import com.kcb.recon.tool.configurations.services.CountriesService;
+import com.kcb.recon.tool.configurations.models.SubsidiaryRequest;
+import com.kcb.recon.tool.configurations.services.SubsidiaryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,6 +27,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class InitializeAppServiceImpl implements InitializeAppService {
 
+    private final SubsidiaryService subsidiaryService;
     @Value("${org.default.admin.email}")
     private String defaultEmail;
 
@@ -55,16 +56,12 @@ public class InitializeAppServiceImpl implements InitializeAppService {
     private final RolesService rolesService;
     private final PermissionsService permissionsService;
     private final UtilitiesService utilitiesService;
-    private final CountriesService countriesService;
 
     @Override
     public void InitializeApplication() {
         log.info("Inside InitializeApplication()");
         log.info("Initializing Application At -> {} ", new Date());
         log.info("Initializing Permissions");
-
-        var userTypes = defaultAccountTypes.split(";");
-
         List<PermissionRequest> Permissions = utilitiesService.getAvailablePermissions();
         for (var p : Permissions) {
             var pr = new PermissionRequest();
@@ -110,13 +107,14 @@ public class InitializeAppServiceImpl implements InitializeAppService {
             }
         }
 
-        if (countriesService.allCountriesWithoutPagination().isEmpty()) {
+        if (subsidiaryService.allCountriesWithoutPagination().isEmpty()) {
             log.info("Creating default country");
-            var countryRequest = new CountryRequest();
-            countryRequest.setUserName("System");
-            countryRequest.setName(defaultCountryName);
-            countryRequest.setCode(defaultCountryCode);
-            countriesService.createCountry(countryRequest);
+            var countryRequest = new SubsidiaryRequest();
+            countryRequest.setCreatedBy("System");
+            countryRequest.setCompanyName(defaultCountryName);
+            countryRequest.setStatus(RecordStatus.Active.name());
+            countryRequest.setCompanyCode(defaultCountryCode);
+            subsidiaryService.createSubsidiary(countryRequest);
             log.info("Default Country {} Created successfully!", defaultCountryName);
         }
 
@@ -124,8 +122,7 @@ public class InitializeAppServiceImpl implements InitializeAppService {
             var u = new UserAccountRequest();
             var role = rolesService.findByRoleName(defaultSuperadminRole);
             role.ifPresent(value -> u.getRoles().add(value.getId()));
-            var country = countriesService.findCountryByCountryName(defaultCountryName);
-            country.ifPresent(cn -> u.setOrganization(cn.getId()));
+            u.setCompanyName(defaultCountryName);
             u.setUsername(defaultUsername);
             u.setAdminName("System");
             u.setFirstName("Admin");

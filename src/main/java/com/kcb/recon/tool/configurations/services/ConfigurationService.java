@@ -1,4 +1,4 @@
-package com.kcb.recon.tool.common.services;
+package com.kcb.recon.tool.configurations.services;
 
 import com.kcb.recon.tool.common.models.*;
 import org.springframework.stereotype.Component;

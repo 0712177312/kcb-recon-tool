@@ -2,19 +2,22 @@ package com.kcb.recon.tool.authentication.services.impl;
 
 import com.kcb.recon.tool.authentication.entities.Permission;
 import com.kcb.recon.tool.authentication.entities.Role;
-import com.kcb.recon.tool.authentication.models.ApproveRejectRequest;
 import com.kcb.recon.tool.authentication.models.RoleRequest;
 import com.kcb.recon.tool.authentication.models.RolesFilter;
 import com.kcb.recon.tool.authentication.repositories.RolesRepository;
 import com.kcb.recon.tool.authentication.services.PermissionsService;
 import com.kcb.recon.tool.authentication.services.RolesService;
+import com.kcb.recon.tool.authentication.utils.AppUtillities;
 import com.kcb.recon.tool.common.enums.ChangeStatus;
 import com.kcb.recon.tool.common.enums.RecordStatus;
 import com.kcb.recon.tool.common.enums.ValidityStatus;
 import com.kcb.recon.tool.common.models.ResponseMessage;
 import com.google.gson.Gson;
+import com.kcb.recon.tool.common.models.RoleDetailsDTO;
+import com.kcb.recon.tool.configurations.extras.Menu1;
+import com.kcb.recon.tool.configurations.extras.SubMenu1;
+import com.kcb.recon.tool.configurations.repositories.CommonRepository;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -24,11 +27,18 @@ import java.util.*;
 @Service
 @Slf4j
 public class RoleServiceImpl implements RolesService {
-    @Autowired
-    private RolesRepository rolesRepository;
 
-    @Autowired
-    private PermissionsService permissionsService;
+    private final RolesRepository rolesRepository;
+    private final CommonRepository commonRepository;
+    private final PermissionsService permissionsService;
+
+    public RoleServiceImpl(RolesRepository rolesRepository,
+                           CommonRepository commonRepository,
+                           PermissionsService permissionsService) {
+        this.rolesRepository = rolesRepository;
+        this.commonRepository = commonRepository;
+        this.permissionsService = permissionsService;
+    }
 
     @Override
     public ResponseMessage createRole(RoleRequest request) {
@@ -36,7 +46,7 @@ public class RoleServiceImpl implements RolesService {
         log.info("Create Role Request {} ", new Gson().toJson(request));
         var res = new ResponseMessage();
         var role = new Role();
-        var exists = rolesRepository.findByNameAndOrganization(request.getName(), request.getOrganization());
+        var exists = rolesRepository.findByName(request.getName());
         if (exists.isPresent()) {
             log.warn("Failed to create role ! Role {} Already exists!", request.getName());
             res.setMessage("Role " + request.getName() + " Already exists!");
@@ -49,7 +59,6 @@ public class RoleServiceImpl implements RolesService {
                 role.setCheckedBy("System");
                 role.setCheckedOn(new Date());
             } else {
-                role.setOrganization(request.getOrganization());
                 role.setStatus(RecordStatus.Active.name());
                 role.setValidityStatus(ValidityStatus.Approved.name());
             }
@@ -65,6 +74,8 @@ public class RoleServiceImpl implements RolesService {
             }
             role.setCreatedBy(request.getUserName());
             rolesRepository.save(role);
+            // Insert menus and submenus into respective tables
+            insertMenusAndSubmenus(request);
             res.setStatus(true);
             res.setData(null);
             log.info("Role {} Created Successfully!", request.getName());
@@ -73,10 +84,24 @@ public class RoleServiceImpl implements RolesService {
         return res;
     }
 
+    private void insertMenusAndSubmenus(RoleRequest request) {
+
+        for (String menuName : request.getMenus()) {
+            Integer menuId = commonRepository.findIdByMenuName(menuName);
+            log.info("menu_id | {}", menuId);
+            commonRepository.insertMenu(menuId, request.getName());
+        }
+
+        for (String submenuName : request.getSubmenus()) {
+            Integer submenuId = commonRepository.findIdBySubMenuName(submenuName);
+            log.info("submenu_id | {}", submenuId);
+            commonRepository.insertSubMenu(submenuId, request.getName());
+        }
+    }
+
     @Override
-    public ResponseMessage updateRoleWithMakerChecker(RoleRequest request) {
-        log.info("Inside updateRoleWithMakerChecker(RoleRequest request) Method At {}", new Date());
-        log.info("Updating Role Request with maker checker enabled {} ", new Gson().toJson(request));
+    public ResponseMessage updateRole(RoleRequest request) {
+        log.info("Updating Role Request {} ", new Gson().toJson(request));
         var res = new ResponseMessage();
         var exists = rolesRepository.findById(request.getId());
 
@@ -86,10 +111,24 @@ public class RoleServiceImpl implements RolesService {
             role.setNewValues(new Gson().toJson(request));
             role.setModifiedBy(request.getUserName());
             role.setModifiedOn(new Date());
-            var currRole = new Gson().toJson(role);
-            var updatedRole = buildUpdatedRoleBody(currRole,request);
-            role.setChangedValues(updatedRole);
+            if (request.isStatus()) {
+                role.setStatus(RecordStatus.Active.name());
+            } else {
+                role.setStatus(RecordStatus.Inactive.name());
+            }
+            Set<Permission> privileges = role.getPermissions();
+            Set<Long> incomingPrivilegeIds = new HashSet<>(request.getPermissions());
+
+            for (var pi : request.getPermissions()) {
+                var permission = permissionsService.findPermissionById(pi);
+                if (permission != null) {
+                    privileges.add(permission);
+                }
+            }
+            privileges.removeIf(privilege -> !incomingPrivilegeIds.contains(privilege.getId()));
+            role.setPermissions(privileges);
             rolesRepository.save(role);
+            insertSubmenus(request);
             res.setStatus(true);
             res.setData(null);
             res.setMessage("Submitted Successfully!");
@@ -101,37 +140,51 @@ public class RoleServiceImpl implements RolesService {
         }
         return res;
     }
+    private void insertSubmenus(RoleRequest request) {
+        List<String> submenuIds = request.getSubmenus();
+        List<String> menuNames = request.getMenus();
+        log.info("submenu_ids, role-name is | {}, {}", submenuIds, request.getName());
+        String roleName = request.getName();
+        // Delete existing submenu and menu mappings
+        if (commonRepository.getAllWithRoleName(roleName)) {
+            try {
+                boolean deletedSubmenus = commonRepository.deleteFromSubMenu(roleName);
+                boolean deletedMenus = commonRepository.deleteFromMenu(roleName);
 
-    public String buildUpdatedRoleBody(String role,RoleRequest rr){
-        Role newRole = new Gson().fromJson(role, Role.class);
-        newRole.setName(rr.getName());
-        newRole.setChangedValues(null);
-        if(rr.isStatus()) {
-            newRole.setStatus(RecordStatus.Active.name());
+                log.info("Deleted submenus? -> {}", deletedSubmenus);
+                log.info("Deleted menus? -> {}", deletedMenus);
+            } catch (Exception e) {
+                String logMessage = AppUtillities.logPreString() + AppUtillities.ERROR + e.getMessage()
+                        + AppUtillities.STACKTRACE + AppUtillities.getExceptionStacktrace(e);
+                log.error("Exception during deletion -> {}", logMessage);
+            }
+        } else {
+            log.info("No existing submenu/menu mappings found for role -> {}", roleName);
         }
-        else{
-            newRole.setStatus(RecordStatus.Inactive.name());
-        }
-        Set<Permission> privileges = newRole.getPermissions();
-        Set<Long> incomingPrivilegeIds = new HashSet<>(rr.getPermissions());
-
-        for (var pi : rr.getPermissions()) {
-            var permission = permissionsService.findPermissionById(pi);
-            if (permission != null) {
-                privileges.add(permission);
+        for (String id : submenuIds) {
+            try {
+                int submenuId = Integer.parseInt(id);
+                commonRepository.insertSubMenu(submenuId, request.getName());
+            } catch (NumberFormatException e) {
+                log.warn("Invalid submenu ID -> {}", id);
             }
         }
-        privileges.removeIf(privilege -> !incomingPrivilegeIds.contains(privilege.getId()));
-        newRole.setPermissions(privileges);
-        return new Gson().toJson(newRole);
+        // Insert new menu mappings
+        for (String menuName : menuNames) {
+            Integer menuId = commonRepository.findIdByMenuName(menuName.trim());
+            if (menuName != null && !menuName.trim().isEmpty()) {
+                commonRepository.insertMenu(menuId, roleName);
+            } else {
+                log.warn("Empty or null menu name skipped for role -> {}", roleName);
+            }
+        }
     }
 
     @Override
     public void updateNoMakerChecker(RoleRequest request) {
         log.info("Inside updateNoMakerChecker(RoleRequest request) Method At {}", new Date());
-        log.info("Updating Role Request with no maker-checker {} ", new Gson().toJson(request));
+        log.info("Updating Role Request  {} | ", new Gson().toJson(request));
         var exists = rolesRepository.findById(request.getId());
-
         if (exists.isPresent()) {
             var role = exists.get();
             role.setName(request.getName());
@@ -147,14 +200,12 @@ public class RoleServiceImpl implements RolesService {
             role.setModifiedOn(new Date());
             Set<Permission> privileges = role.getPermissions();
             Set<Long> incomingPrivilegeIds = new HashSet<>(request.getPermissions());
-
             for (var pi : request.getPermissions()) {
                 var p = permissionsService.findPermissionById(pi);
                 if (p != null) {
                     privileges.add(p);
                 }
             }
-
             privileges.removeIf(privilege -> !incomingPrivilegeIds.contains(privilege.getId()));
             role.setPermissions(privileges);
             rolesRepository.save(role);
@@ -163,107 +214,6 @@ public class RoleServiceImpl implements RolesService {
         }
     }
 
-    @Override
-    public ResponseMessage approveRejectRoleModification(ApproveRejectRequest request) {
-        log.info("Inside approveRejectRoleModification(ApproveRejectRequest request) Method At {}", new Date());
-        log.info("Checker Request to approve/reject role modification {} ", new Gson().toJson(request));
-
-        var res = new ResponseMessage();
-        var exists = rolesRepository.findById(request.getRecordId());
-
-        if (exists.isPresent()) {
-            var role = exists.get();
-            RoleRequest rr = new Gson().fromJson(role.getNewValues(), RoleRequest.class);
-
-            if (rr != null) {
-                role.setModificationsCheckedOn(new Date());
-                role.setModificationsCheckedBy(request.getCheckerName());
-
-
-                if (request.isApprove()) {
-                    if (rr.isStatus()) {
-                        role.setStatus(RecordStatus.Active.name());
-                        role.setValidityStatus(ValidityStatus.Approved.name());
-                    } else {
-                        role.setStatus(RecordStatus.Inactive.name());
-                    }
-                    role.setName(rr.getName());
-                    role.setChangeStatus(ChangeStatus.Approved.name());
-                    role.setNewValues(null);
-
-                    Set<Permission> privileges = role.getPermissions();
-                    Set<Long> incomingPrivilegeIds = new HashSet<>(rr.getPermissions());
-
-                    for (var pi : rr.getPermissions()) {
-                        var p = permissionsService.findPermissionById(pi);
-                        if (p != null) {
-                            privileges.add(p);
-                        }
-                    }
-                    privileges.removeIf(privilege -> !incomingPrivilegeIds.contains(privilege.getId()));
-                    role.setPermissions(privileges);
-                    role.setRemarks("Approved - " + request.getCheckerName());
-
-                    // Save only if approved
-                    rolesRepository.save(role);
-                    log.info("Role {} approved and updated successfully!", rr.getName());
-                } else {
-                    role.setRemarks(request.getRemarks());
-                    role.setChangeStatus(ChangeStatus.Disapproved.name());
-                    log.info("Role {} disapproved by {}", rr.getName(), request.getCheckerName());
-
-                    // Persist only auditing fields if not approved
-                    role.setStatus(role.getStatus());
-                    role.setValidityStatus(role.getValidityStatus());
-                    rolesRepository.save(role);
-                }
-
-                res.setStatus(true);
-                res.setData(null);
-                res.setMessage("Updated Successfully!");
-            }
-        } else {
-            log.warn("Failed to approve/reject role | Role does not exist!");
-            res.setMessage("Role does not exist!");
-            res.setStatus(false);
-        }
-
-        return res;
-    }
-
-
-    @Override
-    public ResponseMessage approveRejectRole(ApproveRejectRequest request) {
-        log.info("Inside approveRejectRole(ApproveRejectRequest request) Method At {}", new Date());
-        log.info("Approving Role Request {} ", new Gson().toJson(request));
-        var exists = rolesRepository.findById(request.getRecordId());
-        var res = new ResponseMessage();
-        if (exists.isPresent()) {
-            var role = exists.get();
-            role.setCheckedBy(request.getCheckerName());
-            role.setCheckedOn(new Date());
-            if (request.isApprove()) {
-                role.setStatus(RecordStatus.Active.name());
-                role.setValidityStatus(ValidityStatus.Approved.name());
-                role.setRemarks("Approved - " + request.getCheckerName());
-            } else {
-                role.setStatus(RecordStatus.Inactive.name());
-                role.setValidityStatus(ValidityStatus.Disapproved.name());
-                role.setRemarks(request.getRemarks());
-            }
-            res.setMessage("Processed Successfully!");
-            res.setStatus(true);
-            res.setData(null);
-            rolesRepository.save(role);
-            log.info("Approve/Reject Role completed successfully by {} ", request.getCheckerName());
-        } else {
-            res.setMessage("Role Does Not Exist!");
-            res.setStatus(false);
-            res.setData(null);
-            log.warn("Failed to approve/reject role | Role does not exist! Cannot process request!");
-        }
-        return res;
-    }
 
     @Override
     public Role findRoleById(Long id) {
@@ -272,14 +222,40 @@ public class RoleServiceImpl implements RolesService {
     }
 
     @Override
-    public List<Role> allRolesAdmin(Long organizationId) {
-        return rolesRepository.allWithoutPaginationForAdmin(organizationId);
+    public RoleDetailsDTO getRoleDetailsWithMenus(Long roleId) {
+        Role role = rolesRepository.findById(roleId).orElse(null);
+        if (role == null) return null;
+        String roleName = role.getName();
+        log.info("Inside getRoleDetailsWithMenus(Long roleId) At {}", new Date());
+        log.info("Role Name {} ", roleName);
+        List<Long> menuIds = commonRepository.findMenuIdsByRoleName(roleName);
+        log.info("menuIds : {}", menuIds);
+        List<Long> subMenuIds = commonRepository.findSubMenuIdsByRoleName(roleName);
+        log.info("subMenuIds : {}", subMenuIds);
+        List<Menu1> menus = commonRepository.findByMenuIdIn(menuIds);
+        log.info("menus: {}", new Gson().toJson(menus));
+        for (Menu1 menu : menus) {
+            if (subMenuIds != null && !subMenuIds.isEmpty()) {
+                List<SubMenu1> subMenus = commonRepository.findBySubMenuMenuIdIn(menu.getId(), subMenuIds);
+                log.info("subMenus : {}", new Gson().toJson(subMenus));
+                if (subMenus != null && !subMenus.isEmpty()) {
+                    menu.setChildren(subMenus);
+                } else {
+                    menu.setChildren(Collections.emptyList());
+                }
+            }
+        }
+        RoleDetailsDTO roleDetails = new RoleDetailsDTO();
+        roleDetails.setId(role.getId());
+        roleDetails.setName(role.getName());
+        roleDetails.setCreatedOn(role.getCreatedOn());
+        roleDetails.setCreatedBy(role.getCreatedBy());
+        roleDetails.setStatus(role.getStatus());
+        roleDetails.setMenus(menus);
+        log.info("roleDetails : {}", new Gson().toJson(roleDetails));
+        return roleDetails;
     }
 
-    @Override
-    public List<Role> allRolesPerOrganization() {
-        return rolesRepository.allWithoutPaginationForOrganizationNoFilter();
-    }
 
     @Override
     public List<Role> allRolesSuperAdmin() {
@@ -300,15 +276,10 @@ public class RoleServiceImpl implements RolesService {
         return rolesRepository.allAdminRolesWithPagination(PageRequest.of(request.getPage(), request.getSize()));
     }
 
-    @Override
-    public Page<Role> paginatedRolesListWithFilters(RolesFilter request) {
-        String status = request.getStatus();
-        Long organization = request.getOrganization();
 
-        if (status != null && !status.isEmpty()) {
-            return rolesRepository.filterWithPaginationStatusProvided(organization,status, PageRequest.of(request.getPage(), request.getSize()));
-        }
-        return rolesRepository.allWithPagination(organization,PageRequest.of(request.getPage(), request.getSize()));
+    @Override
+    public List<Role> paginatedRolesListWithFilters() {
+        return rolesRepository.allWithoutPagination();
     }
 
     @Override
@@ -321,14 +292,4 @@ public class RoleServiceImpl implements RolesService {
         return rolesRepository.filterWithPaginationForReviewListPendingOnly(PageRequest.of(request.getPage(), request.getSize()));
     }
 
-    @Override
-    public Page<Role> paginatedRolesListWithFiltersForModificationsReviewList(RolesFilter request) {
-        String status = request.getStatus();
-        Long organization = request.getOrganization();
-
-        if (status != null && !status.isEmpty()) {
-            return rolesRepository.filterWithPaginationStatusProvidedForModificationsReviewList(organization,status, PageRequest.of(request.getPage(), request.getSize()));
-        }
-        return rolesRepository.filterWithPaginationForModificationsReviewListPendingOnly(organization,PageRequest.of(request.getPage(), request.getSize()));
-    }
 }

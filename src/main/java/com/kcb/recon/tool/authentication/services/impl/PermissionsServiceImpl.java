@@ -10,7 +10,6 @@ import com.kcb.recon.tool.common.enums.ValidityStatus;
 import com.kcb.recon.tool.common.models.ResponseMessage;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;

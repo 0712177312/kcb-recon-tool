@@ -1,9 +1,9 @@
-package com.kcb.recon.tool.authentication.controllers;
+package com.kcb.recon.tool.configurations.controllers;
 
 import com.google.gson.Gson;
 import com.kcb.recon.tool.common.models.ConfigServiceResponse;
 import com.kcb.recon.tool.common.models.EncryptedResponse;
-import com.kcb.recon.tool.common.services.ConfigurationService;
+import com.kcb.recon.tool.configurations.services.ConfigurationService;
 import com.kcb.recon.tool.common.services.EncryptionService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -39,6 +39,7 @@ public class ConfigController {
         ConfigServiceResponse res;
         EncryptedResponse resBody = new EncryptedResponse();
         res = configurationService.sendToConfigService(decrypted);
+        log.info("Config Response | {}", res);
         if (res != null) {
             try {
                 String encryptedResponse = encryptionService.encrypt(new Gson().toJson(res), key);

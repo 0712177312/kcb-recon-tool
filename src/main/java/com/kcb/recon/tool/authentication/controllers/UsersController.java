@@ -8,7 +8,6 @@ import com.kcb.recon.tool.common.services.EncryptionService;
 import com.google.gson.Gson;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -27,7 +26,6 @@ public class UsersController {
 
     @PostMapping("/CreateUserAccount")
     public ResponseEntity<?> AddUserAccount(@RequestBody(required = false) String request,
-                                            @RequestBody(required = false) UserAccountRequest payload,
                                             @RequestParam(defaultValue = "false") boolean encrypted,
                                             @RequestHeader("key") String key) {
         EncryptedResponse resBody = new EncryptedResponse();
@@ -54,7 +52,6 @@ public class UsersController {
 
     @PostMapping("/CreateAdminAccount")
     public ResponseEntity<?> AddAdminAccount(@RequestBody(required = false) String request,
-                                             @RequestBody(required = false) UserAccountRequest payload,
                                              @RequestParam(defaultValue = "false") boolean encrypted,
                                              @RequestHeader("key") String key) {
         EncryptedResponse resBody = new EncryptedResponse();
@@ -81,7 +78,6 @@ public class UsersController {
 
     @PostMapping("/CreateSuperAdminAccount")
     public ResponseEntity<?> CreateSuperAdminAccount(@RequestBody(required = false) String request,
-                                                     @RequestBody(required = false) UserAccountRequest payload,
                                                      @RequestParam(defaultValue = "false") boolean encrypted,
                                                      @RequestHeader("key") String key) {
         EncryptedResponse resBody = new EncryptedResponse();
@@ -108,7 +104,6 @@ public class UsersController {
 
     @PostMapping("/ActivateDeactivate")
     public ResponseEntity<?> ActivateDeactivate(@RequestBody(required = false) String request,
-                                                @RequestBody(required = false) ActivateDeactivateRequest payload,
                                                 @RequestParam(defaultValue = "false") boolean encrypted,
                                                 @RequestHeader("key") String key) {
         EncryptedResponse resBody = new EncryptedResponse();
@@ -137,7 +132,6 @@ public class UsersController {
 
     @PostMapping("/SuperAdminAccounts")
     public ResponseEntity<?> SuperAdminAccounts(@RequestBody(required = false) String request,
-                                           @RequestBody(required = false) SuperAdminAccountsFilter payload,
                                            @RequestParam(defaultValue = "false") boolean encrypted,
                                            @RequestHeader("key") String key) {
         EncryptedResponse resBody = new EncryptedResponse();
@@ -165,7 +159,6 @@ public class UsersController {
 
     @PostMapping("/AdminAccounts")
     public ResponseEntity<?> AdminAccounts(@RequestBody(required = false) String request,
-                                          @RequestBody(required = false) AdminAccountsFilter payload,
                                           @RequestParam(defaultValue = "false") boolean encrypted,
                                           @RequestHeader("key") String key) {
         EncryptedResponse resBody = new EncryptedResponse();
@@ -193,7 +186,6 @@ public class UsersController {
 
     @PostMapping("/UserAccounts")
     public ResponseEntity<?> UserAccounts(@RequestBody(required = false) String request,
-                                           @RequestBody(required = false) UserAccountsFilter payload,
                                            @RequestParam(defaultValue = "false") boolean encrypted,
                                            @RequestHeader("key") String key) {
         EncryptedResponse resBody = new EncryptedResponse();
@@ -241,64 +233,9 @@ public class UsersController {
         }
     }
 
-    @PostMapping("/UserChangePassword")
-    public ResponseEntity<?> UpdatePassword(@RequestBody(required = false) String request,
-                                            @RequestBody(required = false) ChangePasswordRequest payload,
-                                            @RequestParam(defaultValue = "false") boolean encrypted,
-                                            @RequestHeader("key") String key) {
-        EncryptedResponse resBody = new EncryptedResponse();
-        var res = new ResponseMessage();
-        try {
-            ChangePasswordRequest passwordRequest = encrypted ? encryptionService.decrypt(request, ChangePasswordRequest.class, key) : new Gson().fromJson(request, ChangePasswordRequest.class);
-            res = usersService.UserChangePassword(passwordRequest);
-            HttpStatus status = (res != null && res.isStatus()) ? HttpStatus.CREATED : HttpStatus.EXPECTATION_FAILED;
-            String responseBody = res != null && res.isStatus()
-                    ? encryptionService.encrypt(new Gson().toJson(res), key)
-                    : new Gson().toJson(res);
-            resBody.setBody(responseBody);
-            resBody.setCode(status.value());
-            return new ResponseEntity<>(resBody, status);
-        } catch (Exception e) {
-            res = new ResponseMessage();
-            res.setMessage("Error changing user password | " + e.getMessage());
-            res.setStatus(false);
-            resBody.setBody(res);
-            resBody.setCode(417);
-            return new ResponseEntity<>(resBody, HttpStatus.EXPECTATION_FAILED);
-        }
-    }
-
-    @PostMapping("/AdminChangeUserPassword")
-    public ResponseEntity<?> AdminUpdateUserPassword(@RequestBody(required = false) String request,
-                                                     @RequestBody(required = false) AdminChangeUserPasswordRequest payload,
-                                                     @RequestParam(defaultValue = "false") boolean encrypted,
-                                                     @RequestHeader("key") String key) {
-        EncryptedResponse resBody = new EncryptedResponse();
-        var res = new ResponseMessage();
-        try {
-            AdminChangeUserPasswordRequest passwordRequest = encrypted ? encryptionService.decrypt(request, AdminChangeUserPasswordRequest.class, key) : new Gson().fromJson(request, AdminChangeUserPasswordRequest.class);
-            res = usersService.AdminChangeUserPassword(passwordRequest);
-            HttpStatus status = (res != null && res.isStatus()) ? HttpStatus.CREATED : HttpStatus.EXPECTATION_FAILED;
-            String responseBody = res != null && res.isStatus()
-                    ? encryptionService.encrypt(new Gson().toJson(res), key)
-                    : new Gson().toJson(res);
-            resBody.setBody(responseBody);
-            resBody.setCode(status.value());
-            return new ResponseEntity<>(resBody, status);
-        } catch (Exception e) {
-            res = new ResponseMessage();
-            res.setMessage("Error changing user password | " + e.getMessage());
-            res.setStatus(false);
-            resBody.setBody(res);
-            resBody.setCode(417);
-            return new ResponseEntity<>(resBody, HttpStatus.EXPECTATION_FAILED);
-        }
-    }
-
     @PutMapping("/ProfileUpdate")
     public ResponseEntity<?> UpdateProfileDetails(
             @RequestBody(required = false) String request,
-            @RequestBody(required = false) UpdateProfileRequest payload,
             @RequestParam(defaultValue = "false") boolean encrypted,
             @RequestHeader("key") String key) {
         EncryptedResponse resBody = new EncryptedResponse();
@@ -323,10 +260,9 @@ public class UsersController {
         }
     }
 
-    @PutMapping("/AdminUpdateUserProfile")
+    @PostMapping("/updateUserDetails")
     public ResponseEntity<?> AdminUpdateUserProfile(
             @RequestBody(required = false) String request,
-            @RequestBody(required = false) UpdateProfileRequest payload,
             @RequestParam(defaultValue = "false") boolean encrypted,
             @RequestHeader("key") String key) {
         EncryptedResponse resBody = new EncryptedResponse();

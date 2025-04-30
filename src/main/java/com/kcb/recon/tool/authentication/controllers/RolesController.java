@@ -1,18 +1,16 @@
 package com.kcb.recon.tool.authentication.controllers;
 
-import com.kcb.recon.tool.authentication.models.ApproveRejectRequest;
 import com.kcb.recon.tool.authentication.models.RoleRequest;
 import com.kcb.recon.tool.authentication.models.RolesFilter;
 import com.kcb.recon.tool.authentication.services.RolesService;
+import com.kcb.recon.tool.authentication.utils.AppUtillities;
 import com.kcb.recon.tool.common.models.EncryptedResponse;
 import com.kcb.recon.tool.common.models.ResponseMessage;
 import com.kcb.recon.tool.common.services.EncryptionService;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -31,15 +29,13 @@ public class RolesController {
     }
 
     @PostMapping("/FilteredRoles")
-    public ResponseEntity<?> GetRolesWithFilters(@RequestBody(required = false) String request,
-                                                 @RequestBody(required = false) RolesFilter payload,
-                                                 @RequestParam(defaultValue = "false") boolean encrypted,
+    public ResponseEntity<?> GetRolesWithFilters(
+
                                                  @RequestHeader("key") String key) {
         EncryptedResponse resBody = new EncryptedResponse();
         var res = new ResponseMessage();
         try {
-            RolesFilter rolesFilter = encrypted ? encryptionService.decrypt(request, RolesFilter.class, key) : new Gson().fromJson(request, RolesFilter.class);
-            var data = rolesService.paginatedRolesListWithFilters(rolesFilter);
+            var data = rolesService.paginatedRolesListWithFilters();
             res.setData(data);
             res.setStatus(true);
             res.setMessage("Successful");
@@ -60,7 +56,6 @@ public class RolesController {
 
     @PostMapping("/AdminRoles")
     public ResponseEntity<?> AdminRolesList(@RequestBody(required = false) String request,
-                                            @RequestBody(required = false) RolesFilter payload,
                                             @RequestParam(defaultValue = "false") boolean encrypted,
                                             @RequestHeader("key") String key) {
         EncryptedResponse resBody = new EncryptedResponse();
@@ -94,13 +89,16 @@ public class RolesController {
                                              @RequestHeader("key") String key) {
         EncryptedResponse resBody = new EncryptedResponse();
         try {
-            var role = rolesService.findRoleById(id);
+            var role = rolesService.getRoleDetailsWithMenus(id);
             String responseBody = encryptionService.encrypt(new Gson().toJson(role), key);
             HttpStatus status = role != null ? HttpStatus.OK : HttpStatus.EXPECTATION_FAILED;
             resBody.setBody(responseBody);
             resBody.setCode(status.value());
             return new ResponseEntity<>(resBody, status);
         } catch (Exception e) {
+            String logMessage = AppUtillities.logPreString() + AppUtillities.ERROR + e.getMessage()
+                    + AppUtillities.STACKTRACE + AppUtillities.getExceptionStacktrace(e);
+            log.error("log-message -> {}", logMessage);
             var res = new ResponseMessage();
             res.setMessage("Failed to encrypt role details | " + e.getMessage());
             res.setStatus(false);
@@ -112,7 +110,6 @@ public class RolesController {
 
     @PostMapping("/ReviewList")
     public ResponseEntity<?> ReviewList(@RequestBody(required = false) String request,
-                                        @RequestBody(required = false) RolesFilter payload,
                                         @RequestParam(defaultValue = "false") boolean encrypted,
                                         @RequestHeader("key") String key) {
         EncryptedResponse resBody = new EncryptedResponse();
@@ -164,7 +161,6 @@ public class RolesController {
 
     @PostMapping("/Add")
     public ResponseEntity<?> AddNewRole(@RequestBody(required = false) String request,
-                                        @RequestBody(required = false) RoleRequest payload,
                                         @RequestParam(defaultValue = "false") boolean encrypted,
                                         @RequestHeader("key") String key) {
         EncryptedResponse resBody = new EncryptedResponse();
@@ -173,6 +169,7 @@ public class RolesController {
             RoleRequest roleRequest = encrypted
                     ? encryptionService.decrypt(request, RoleRequest.class, key)
                     : new Gson().fromJson(request, RoleRequest.class);
+            log.info("role request | {}",roleRequest);
             res = rolesService.createRole(roleRequest);
             HttpStatus status = (res != null && res.isStatus()) ? HttpStatus.CREATED : HttpStatus.EXPECTATION_FAILED;
             String responseBody = res != null && res.isStatus()
@@ -180,6 +177,7 @@ public class RolesController {
                     : new Gson().toJson(res);
             resBody.setBody(responseBody);
             resBody.setCode(status.value());
+
             return new ResponseEntity<>(resBody, status);
         } catch (Exception e) {
             ResponseMessage errorResponse = new ResponseMessage();
@@ -193,7 +191,6 @@ public class RolesController {
 
     @PutMapping("/UpdateAdminRole")
     public ResponseEntity<?> UpdateAdminRole(@RequestBody(required = false) String request,
-                                             @RequestBody(required = false) RoleRequest payload,
                                              @RequestParam(defaultValue = "false") boolean encrypted,
                                              @RequestHeader("key") String key) {
         EncryptedResponse resBody = new EncryptedResponse();
@@ -220,9 +217,8 @@ public class RolesController {
         }
     }
 
-    //    @PutMapping("/Update")
+     @PostMapping("/Update")
     public ResponseEntity<?> UpdateRole(@RequestBody(required = false) String request,
-                                        @RequestBody(required = false) RoleRequest payload,
                                         @RequestParam(defaultValue = "false") boolean encrypted,
                                         @RequestHeader("key") String key) {
         EncryptedResponse resBody = new EncryptedResponse();
@@ -231,7 +227,7 @@ public class RolesController {
             RoleRequest roleRequest = encrypted
                     ? encryptionService.decrypt(request, RoleRequest.class, key)
                     : new Gson().fromJson(request, RoleRequest.class);
-            res = rolesService.updateRoleWithMakerChecker(roleRequest);
+            res = rolesService.updateRole(roleRequest);
             HttpStatus status = (res != null && res.isStatus()) ? HttpStatus.OK : HttpStatus.EXPECTATION_FAILED;
             String responseBody = res != null && res.isStatus()
                     ? encryptionService.encrypt(new Gson().toJson(res), key)

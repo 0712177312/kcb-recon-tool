@@ -7,8 +7,12 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class CountriesFilter {
+public class SubsidiaryRequest {
+    private Long id;
+    private String companyCode;
+    private String companyName;
     private String status;
-    private int page;
-    private int size;
+    private String createdOn;
+    private String createdBy;
+    private String userName;
 }

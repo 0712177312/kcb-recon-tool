@@ -20,8 +20,6 @@ public class Role extends Auditing {
     private Long id;
     @Column(name = "name")
     private String name;
-    @Column(name = "organization")
-    private Long organization;
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "role_permission",
@@ -29,4 +27,5 @@ public class Role extends Auditing {
             inverseJoinColumns = @JoinColumn(name = "permission_id")
     )
     private Set<Permission> permissions = new HashSet<>();
+
 }

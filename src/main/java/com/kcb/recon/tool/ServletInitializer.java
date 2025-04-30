@@ -11,4 +11,5 @@ public class ServletInitializer extends SpringBootServletInitializer {
 				 sources(ReconToolApplication.class)
 				.properties("spring.config.location=file:/var/recontool/core/configuration/application.properties");
 	}
+
 }

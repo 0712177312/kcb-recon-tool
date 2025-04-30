@@ -22,7 +22,6 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @RequiredArgsConstructor
 public class SecurityConfig implements WebMvcConfigurer {
 
-    private  final UsernameOnlyAuthenticationProvider usernameOnlyAuthenticationProvider;
 
     @Value("${cors.origin}")
     private String origin;

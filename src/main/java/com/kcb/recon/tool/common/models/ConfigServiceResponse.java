@@ -16,4 +16,5 @@ public class ConfigServiceResponse {
     private String message;
     private Object data;
     private boolean status;
+    private int code;
 }
