@@ -17,15 +17,12 @@ public class PermissionsController {
 
 
     private final PermissionsService permissionsService;
-
-
     private final EncryptionService encryptionService;
 
     public PermissionsController(PermissionsService permissionsService, EncryptionService encryptionService) {
         this.permissionsService = permissionsService;
         this.encryptionService = encryptionService;
     }
-
 
     @GetMapping("/View")
     public ResponseEntity<?> ViewPermissionsWithPagination(@RequestParam(defaultValue = "0") int page,

@@ -1,0 +1,35 @@
+parameters:
+  - name: agentPool
+    type: object
+    default:
+      name: 'agentpoolvmtemplate' # Changable at runtime on demand. Agent pool name to use for this pipeline jobs
+  - name: pipelineTemplate
+    type: string
+    default: 'master'
+
+resources:
+  repositories:
+    - repository: azure-build-pipeline
+      type: git
+      name: KCB-DevOps/azure-build-pipeline
+      ref: ${{ parameters.pipelineTemplate }}
+
+trigger:
+  - none
+
+variables:
+  - group: kcb-global-pipeline-variables
+  - name: openshiftProjectName
+    value: 'kekcb-recontool-portal' # Change to project name (OCP project/namespace name)
+  - name: openshiftProject
+    value: 'kekcb-recontool-portal-users-v1' # Microservice name
+  - name: jdkVersion
+    value: '21'
+
+stages:
+  - template: /stages/dev-pipeline.yml@azure-build-pipeline
+    parameters:
+      openShiftProjectName: ${{ variables.openshiftProjectName }}
+      service: '${{ variables.openshiftProject }}'
+      agentPool: ${{ parameters.agentPool }}
+      mavenServiceConnections: 'KCB-DEV'

@@ -22,5 +22,4 @@ public interface RolesService {
     Optional<Role> findByRoleName(String name);
     Page<Role> paginatedAdminRolesListWithFilters(RolesFilter filter);
     List<Role> paginatedRolesListWithFilters();
-    Page<Role> paginatedRolesListWithFiltersForReviewList(RolesFilter filter);
 }

@@ -39,7 +39,6 @@ public class ActiveDirectory {
             adResponse.setCode(200);
         } catch (NamingException e) {
             logger.warning("Failed to authenticate user: " + e.getMessage());
-
             adResponse.setCode(400);
             adResponse.setMessage( e.getMessage());
         }

@@ -26,9 +26,6 @@ public interface UsersRepository extends JpaRepository<User, Long> {
     @Query(nativeQuery = true, value = "SELECT * FROM user_accounts where is_admin=1")
     Page<User> allSuperAdminAccountsWithPagination(Pageable pageable);
 
-    @Query(nativeQuery = true, value = "SELECT * FROM user_accounts ua WHERE  ua.status='Active' AND ua.is_admin ='1'")
-    List<User> allSuperAdminAccountsWithoutPagination();
-
     @Query(nativeQuery = true, value = "SELECT * FROM user_accounts  \n" +
             "WHERE subsidiary_id IS NOT NULL")
     Page<User> allAdminAccountsWithPagination(Pageable pageable);

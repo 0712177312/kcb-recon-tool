@@ -31,14 +31,15 @@ public class ConfigController {
     @PostMapping(value = "/rest")
     public ResponseEntity<EncryptedResponse> processConfigRequest(@RequestBody(required = false) String request,
                                                                       @RequestParam(defaultValue = "false") boolean encrypted,
-                                                                      @RequestHeader("key") String key) {
+                                                                      @RequestHeader("key") String key,@RequestHeader("Authorization") String token) {
         log.info("Received Post request: {}", request);
+        log.info("Authorization token: {}", token);
         String decrypted = encrypted ? encryptionService.decrypt(request, key) : request;
         log.info("Decrypted: {}", decrypted);
         new ConfigServiceResponse();
         ConfigServiceResponse res;
         EncryptedResponse resBody = new EncryptedResponse();
-        res = configurationService.sendToConfigService(decrypted);
+        res = configurationService.sendToConfigService(decrypted,token);
         log.info("Config Response | {}", res);
         if (res != null) {
             try {

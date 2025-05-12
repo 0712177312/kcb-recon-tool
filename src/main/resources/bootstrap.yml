@@ -1,0 +1,39 @@
+server:
+  port: ${SERVER_PORT:8080}
+  shutdown: graceful
+  servlet:
+    context-path: /
+kcb:
+  loki:
+    url: ${LOGGING_LOKI_URL}
+
+spring:
+  application:
+    name: kekcb-recontool-portal-users-v1
+  profiles:
+    active: ${SPRING_ACTIVE_PROFILE:dev}
+  threads:
+    virtual:
+      enabled: true
+  cloud:
+    compatibility-verifier:
+      enabled: false
+    config:
+      uri: ${CONFIG_SERVER_URL:http://172.17.152.67:4545/kcb-configuration-server/}
+      username: ${CONFIG_SERVER_USERNAME:admin}
+      password: ${CONFIG_SERVER_PASSWORD:admin}
+      label: latest
+      name: kekcb-recontool-portal-users-v1
+
+jasypt:
+  encryptor:
+    password: ${JASYPT_KEY}
+    iv-generator-classname: org.jasypt.iv.NoIvGenerator
+    algorithm: PBEWithMD5AndDES
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+

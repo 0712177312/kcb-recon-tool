@@ -1,0 +1,37 @@
+parameters:
+  - name: agentPool
+    type: object
+    default:
+      name: 'agentpoolvmtemplate'
+  - name: pipelineTemplate
+    type: string
+    default: 'master'
+
+resources:
+  repositories:
+    - repository: azure-build-pipeline
+      type: git
+      name: KCB-DevOps/azure-build-pipeline
+      ref: ${{ parameters.pipelineTemplate }}
+
+trigger:
+  - none
+
+variables:
+  - group: kcb-global-pipeline-variables
+  - name: openshiftProjectName
+    value: 'kekcb-recontool-portal' # Change to project name (OCP project/namespace name)
+  - name: openshiftProject
+    value: 'kekcb-recontool-portal-users-v1' # Microservice name
+  - name: jdkVersion
+    value: '21'
+
+stages:
+  - template: /stages/qa-pipeline.yml@azure-build-pipeline
+    parameters:
+      openShiftProjectName: ${{ variables.openshiftProjectName }}
+      e2eProjectName: '${{ variables.openshiftProject }}-e2e'
+      service: '${{ variables.openshiftProject }}'
+      testGroups: ['com.kcbgroup.main.ApplicationTests']
+      agentPool: ${{ parameters.agentPool }}
+      mavenServiceConnections: 'KCB-DEV'

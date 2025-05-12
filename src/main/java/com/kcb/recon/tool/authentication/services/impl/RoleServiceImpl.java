@@ -282,14 +282,5 @@ public class RoleServiceImpl implements RolesService {
         return rolesRepository.allWithoutPagination();
     }
 
-    @Override
-    public Page<Role> paginatedRolesListWithFiltersForReviewList(RolesFilter request) {
-        String status = request.getStatus();
-
-        if (status != null && !status.isEmpty()) {
-            return rolesRepository.filterWithPaginationStatusProvidedForReviewList(status, PageRequest.of(request.getPage(), request.getSize()));
-        }
-        return rolesRepository.filterWithPaginationForReviewListPendingOnly(PageRequest.of(request.getPage(), request.getSize()));
-    }
 
 }

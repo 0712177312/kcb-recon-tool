@@ -23,7 +23,7 @@ public class ConfigurationServiceImpl implements ConfigurationService {
     }
 
     @Override
-    public ConfigServiceResponse sendToConfigService(String request) {
+    public ConfigServiceResponse sendToConfigService(String request,String token) {
         log.info("Config Request Request | {}", request);
         log.info("configServiceUrl | {}", configServiceUrl);
         ConfigServiceResponse res = new ConfigServiceResponse();
@@ -32,6 +32,7 @@ public class ConfigurationServiceImpl implements ConfigurationService {
                 .url(configServiceUrl)
                 .post(body)
                 .addHeader("Content-Type", "application/json")
+                .addHeader("Authorization", token)
                 .build();
         try {
 

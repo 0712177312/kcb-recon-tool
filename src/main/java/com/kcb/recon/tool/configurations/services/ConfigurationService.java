@@ -5,6 +5,6 @@ import org.springframework.stereotype.Component;
 
 @Component
 public interface ConfigurationService {
-    ConfigServiceResponse sendToConfigService(String request);
+    ConfigServiceResponse sendToConfigService(String request,String token);
 
 }

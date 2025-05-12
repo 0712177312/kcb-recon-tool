@@ -108,32 +108,6 @@ public class RolesController {
         }
     }
 
-    @PostMapping("/ReviewList")
-    public ResponseEntity<?> ReviewList(@RequestBody(required = false) String request,
-                                        @RequestParam(defaultValue = "false") boolean encrypted,
-                                        @RequestHeader("key") String key) {
-        EncryptedResponse resBody = new EncryptedResponse();
-        var res = new ResponseMessage();
-        try {
-            RolesFilter rolesFilter = encrypted ? encryptionService.decrypt(request, RolesFilter.class, key) : new Gson().fromJson(request, RolesFilter.class);
-            var data = rolesService.paginatedRolesListWithFiltersForReviewList(rolesFilter);
-            res.setData(data);
-            res.setStatus(true);
-            res.setMessage("Successful");
-            var encryptedData = encryptionService.encrypt(new Gson().toJson(res), key);
-            HttpStatus status = encryptedData != null ? HttpStatus.OK : HttpStatus.EXPECTATION_FAILED;
-            resBody.setBody(encryptedData);
-            resBody.setCode(status.value());
-            return new ResponseEntity<>(resBody, status);
-        } catch (Exception e) {
-            res = new ResponseMessage();
-            res.setMessage("Error Fetching roles | " + e.getMessage());
-            res.setStatus(false);
-            resBody.setBody(res);
-            resBody.setCode(417);
-            return new ResponseEntity<>(resBody, HttpStatus.EXPECTATION_FAILED);
-        }
-    }
 
 
     @GetMapping("/All")

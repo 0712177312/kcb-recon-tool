@@ -1,0 +1,18 @@
+spring:
+  threads:
+    virtual:
+      enabled: true
+  config:
+    activate:
+      on-profile: ${SPRING_ACTIVE_PROFILE:dev}
+  application:
+    name: kekcb-recontool-portal-users-v1
+  jackson:
+    serialization:
+      fail-on-empty-beans: false
+
+management:
+  endpoints.web.exposure.include: health, info, metrics, prometheus, actuator
+  metrics.distribution.percentiles-histogram.http.server.requests: true
+  observations.key-values.application: ${spring.application.name}
+  tracing.sampling.probability: 1.0

@@ -1,0 +1,91 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kekcb-recontool-portal-users-v1
+  labels:
+    app: kekcb-recontool-portal-users-v1
+    version: v1
+spec:
+  selector:
+    matchLabels:
+      app: kekcb-recontool-portal-users-v1
+  replicas: 1
+  template:
+    metadata:
+      annotations:
+        sidecar.istio.io/inject: 'True'
+      labels:
+        app: kekcb-recontool-portal-users-v1
+        version: v1
+    spec:
+      containers:
+        - name: kekcb-recontool-portal-users-v1
+          image: >-
+            (_azureRegistryUrl)/(_openshiftProjectName)/(_openshiftProject):(_image_tag)
+          readinessProbe:
+            httpGet:
+              path: /kekcb-recontool-portal-users-v1/actuator/health
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 20
+          livenessProbe:
+            httpGet:
+              path: /kekcb-recontool-portal-users-v1/actuator/health
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 20
+          startupProbe:
+            httpGet:
+              port: 8080
+              path: /kekcb-recontool-portal-users-v1/actuator/health
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 20
+          resources:
+            requests:
+              cpu: 200m
+              memory: 512Mi
+            limits:
+              cpu: 500m
+              memory: 1Gi
+          env:
+            - name: CONFIG_SERVER_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  key: config.server.username
+                  name: kcb-common-secrets
+            - name: CONFIG_SERVER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: config.server.password
+                  name: kcb-common-secrets
+            - name: JASYPT_KEY
+              valueFrom:
+                secretKeyRef:
+                  key: jasypt.key
+                  name: kcb-common-secrets
+            - name: CONFIG_SERVER_URL
+              valueFrom:
+                configMapKeyRef:
+                  key: config.server.url
+                  name: kcb-common-configmap
+            - name: SPRING_ACTIVE_PROFILE
+              valueFrom:
+                configMapKeyRef:
+                  key: spring.active.profile
+                  name: kcb-common-configmap
+            - name: LOGGING_LOKI_URL
+              valueFrom:
+                configMapKeyRef:
+                  key: logging.loki.url
+                  name: kcb-common-configmap
+          ports:
+            - containerPort: 8080
+          imagePullPolicy: Always
+      imagePullSecrets:
+        - name: arokcb-registry

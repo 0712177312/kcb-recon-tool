@@ -14,7 +14,6 @@ import java.util.regex.Pattern;
 public class LdapErrorHandler {
 
     private static final Gson gson = new Gson();
-
     private static final Map<String, String> ERROR_MAP = new HashMap<>();
 
     static {
@@ -31,7 +30,6 @@ public class LdapErrorHandler {
 
     public static String getErrorMessage(AdResponse adResponseJson) {
         try {
-
             String jsonString = gson.toJson(adResponseJson);
             JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
             if (jsonObject.has("message")) {

@@ -6,6 +6,7 @@ import com.kcb.recon.tool.common.models.EncryptedResponse;
 import com.kcb.recon.tool.common.models.ResponseMessage;
 import com.kcb.recon.tool.common.services.EncryptionService;
 import com.google.gson.Gson;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,6 +26,7 @@ public class UsersController {
     }
 
     @PostMapping("/CreateUserAccount")
+    @Operation(summary = "Create User account",description = "Add user details")
     public ResponseEntity<?> AddUserAccount(@RequestBody(required = false) String request,
                                             @RequestParam(defaultValue = "false") boolean encrypted,
                                             @RequestHeader("key") String key) {

@@ -1,0 +1,22 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: vs-kekcb-recontool-portal-users-v1
+  namespace: kekcb-recontool-portal
+spec:
+  gateways:
+    - istio-system-cp1/microservices-gateway
+  hosts:
+    - '*'
+  http:
+    - match:
+        - uri:
+            prefix: /kekcb-recontool-portal-users-v1
+      rewrite:
+        uri: /kekcb-recontool-portal-users-v1
+      route:
+        - destination:
+            host: kekcb-recontool-portal-users-v1.kekcb-recontool-portal.svc.cluster.local
+            subset: v1
+          weight: 100
+        
